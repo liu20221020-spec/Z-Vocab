@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>单词本</title>
-<script src="https://unpkg.com/compromise@14.14.0/builds/compromise.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/compromise@14.14.0/builds/compromise.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fafaf9; color: #1c1917; min-height: 100vh; }
@@ -34,7 +34,7 @@
   #token-display { line-height: 2.8; font-size: 15px; }
   .token-btn { background: none; border: none; cursor: pointer; border-radius: 3px; padding: 1px 3px; font-size: 15px; font-family: inherit; transition: background 0.1s; }
   .token-btn:hover { background: rgba(0,0,0,0.06); }
-  .token-btn.pos-selected { background: #fde68a!important; border-bottom: none!important; font-weight: 600; }
+  .token-btn.sc-selected { outline: 2px solid #f59e0b!important; outline-offset: 1px; font-weight: 600; }
   .token-punct { color: #a8a29e; }
   /* translation box */
   #translation-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 18px; margin-top: 14px; display: none; }
@@ -132,17 +132,18 @@
   .spinner { display:inline-block;width:10px;height:10px;border:2px solid #a8a29e;border-top-color:#1c1917;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:3px;vertical-align:middle; }
   @keyframes spin { to{transform:rotate(360deg)} }
   #manual-area { margin-top:10px;display:none; }
-  /* POS colors */
-  .pos-noun    { color:#1d4ed8;border-bottom:2px solid #bfdbfe; }
-  .pos-verb    { color:#15803d;border-bottom:2px solid #bbf7d0; }
-  .pos-adj     { color:#b45309;border-bottom:2px solid #fde68a; }
-  .pos-adv     { color:#7c3aed;border-bottom:2px solid #ddd6fe; }
-  .pos-prep    { color:#78716c; }
-  .pos-other   { color:#1c1917; }
-  .pos-selected{ background:#fde68a!important;border-radius:3px;padding:0 2px; }
+  /* Sentence structure colors — background highlight style */
+  .sc-subj  { background:#dbeafe;border-radius:3px;padding:1px 2px; }   /* 主语 blue   */
+  .sc-verb  { background:#dcfce7;border-radius:3px;padding:1px 2px; }   /* 谓语 green  */
+  .sc-obj   { background:#fed7aa;border-radius:3px;padding:1px 2px; }   /* 宾语 orange */
+  .sc-attr  { background:#ede9fe;border-radius:3px;padding:1px 2px; }   /* 定语 purple */
+  .sc-adv   { background:#fef9c3;border-radius:3px;padding:1px 2px; }   /* 状语 yellow */
+  .sc-clause{ background:#fce7f3;border-radius:3px;padding:1px 2px; }   /* 从句 pink   */
+  .sc-none  { color:#1c1917; }
+  .sc-selected { outline:2px solid #f59e0b;outline-offset:1px; }
   .pos-legend  { display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f4; }
-  .legend-item { display:flex;align-items:center;gap:4px;font-size:11px;color:#78716c; }
-  .legend-dot  { width:8px;height:8px;border-radius:50%; }
+  .legend-item { display:flex;align-items:center;gap:4px;font-size:11px;color:#57534e; }
+  .legend-dot  { width:10px;height:10px;border-radius:2px; }
   /* English definition */
   .en-def-box  { background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;margin-top:10px; }
   .en-def-pos  { font-size:10px;font-weight:600;color:#0369a1;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px; }
@@ -173,13 +174,15 @@
   <p class="subtitle">粘贴原文句子，点击要记的单词</p>
   <textarea id="sentence-input" rows="4" placeholder="粘贴你遇到的英文句子…" oninput="onSentenceInput()"></textarea>
   <div class="card" id="token-card" style="margin-top:14px;display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div style="margin-bottom:10px;">
       <span style="font-size:12px;font-weight:600;color:#44403c;">句子成分标注</span>
-      <div class="pos-legend" style="margin:0;padding:0;border:none;">
-        <div class="legend-item"><div class="legend-dot" style="background:#1d4ed8;"></div>名词</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#15803d;"></div>动词</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#b45309;"></div>形容词</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;"></div>副词</div>
+      <div class="pos-legend" style="margin-top:8px;padding:0;border:none;">
+        <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #93c5fd;"></div>主语</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #86efac;"></div>谓语</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fed7aa;border:1px solid #fdba74;"></div>宾语</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ede9fe;border:1px solid #c4b5fd;"></div>定语</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;border:1px solid #fde047;"></div>状语</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fce7f3;border:1px solid #f9a8d4;"></div>从句</div>
       </div>
     </div>
     <div id="token-display"></div>
@@ -367,17 +370,138 @@ async function translate(text){
   return'';
 }
 
-// ── POS Tagging ────────────────────────────────────────────────
-function getTagClass(tags){
-  if(!tags)return'pos-other';
-  // compromise v14 returns tags as object {Noun:true} OR array — handle both
-  const has=(t)=>Array.isArray(tags)?tags.includes(t):(tags[t]===true);
-  if(has('Noun')||has('ProperNoun')||has('Singular')||has('Plural'))return'pos-noun';
-  if(has('Verb')||has('Infinitive')||has('PastTense')||has('PresentTense'))return'pos-verb';
-  if(has('Adjective'))return'pos-adj';
-  if(has('Adverb'))return'pos-adv';
-  if(has('Preposition')||has('Conjunction')||has('Determiner')||has('Article'))return'pos-prep';
-  return'pos-other';
+// ── Sentence Structure Analysis ────────────────────────────────
+// Subordinating conjunctions that introduce clauses
+const CLAUSE_STARTERS = new Set(['that','which','who','whom','whose','where','when','while','although','though','because','since','if','unless','until','after','before','as','whether','how','what','whatever','whoever','whenever','wherever','however']);
+// Common adverbials
+const ADV_WORDS = new Set(['almost','also','already','always','just','never','not','now','often','only','quite','really','recently','sometimes','soon','still','then','too','very','yet','again','also','even','here','maybe','perhaps','perhaps','rather','so','soon','there','thus','hereby','thereby','therefore','hence','thus','still','once','twice']);
+
+function analyzeSentence(s) {
+  // Returns a map: wordIndex -> class
+  const words = [];
+  const tokenRegex = /[\w']+|[^\w\s]|\s+/g;
+  let m, idx = 0;
+  while ((m = tokenRegex.exec(s)) !== null) {
+    words.push({ text: m[0], start: m.index, isWord: /[a-zA-Z]/.test(m[0]) });
+  }
+
+  // Use compromise if available
+  if (window.nlp) {
+    const doc = nlp(s);
+    const labelMap = {}; // word start offset -> class
+
+    // Mark verbs
+    doc.verbs().forEach(v => {
+      v.terms().forEach(t => { if(t.offset) labelMap[t.offset.start] = 'sc-verb'; });
+    });
+
+    // Mark subjects (noun phrases before main verb)
+    doc.match('#Noun+').forEach(np => {
+      np.terms().forEach(t => {
+        if(t.offset && !labelMap[t.offset.start]) {
+          // Check if it's before first verb → subject, else object/other
+          const firstVerbOffset = getFirstVerbOffset(doc);
+          labelMap[t.offset.start] = t.offset.start < firstVerbOffset ? 'sc-subj' : 'sc-obj';
+        }
+      });
+    });
+
+    // Mark adjectives/attributes modifying nouns
+    doc.adjectives().forEach(adj => {
+      adj.terms().forEach(t => { if(t.offset && !labelMap[t.offset.start]) labelMap[t.offset.start] = 'sc-attr'; });
+    });
+
+    // Mark adverbs
+    doc.adverbs().forEach(adv => {
+      adv.terms().forEach(t => { if(t.offset && !labelMap[t.offset.start]) labelMap[t.offset.start] = 'sc-adv'; });
+    });
+
+    return { words, labelMap, useOffset: true };
+  }
+
+  // Fallback: rule-based
+  return analyzeFallback(words);
+}
+
+function getFirstVerbOffset(doc) {
+  let minOffset = 99999;
+  doc.verbs().forEach(v => {
+    v.terms().forEach(t => { if(t.offset && t.offset.start < minOffset) minOffset = t.offset.start; });
+  });
+  return minOffset;
+}
+
+function analyzeFallback(words) {
+  // Rule-based: identify clause boundaries first, then subject/verb/object
+  const labelMap = {};
+  const wordsOnly = words.filter(w => w.isWord);
+
+  // Find clause starters
+  let inClause = false;
+  let foundVerb = false;
+  let foundSubjEnd = false;
+
+  wordsOnly.forEach((w, i) => {
+    const lw = w.text.toLowerCase();
+
+    // Clause detection
+    if (CLAUSE_STARTERS.has(lw) && i > 0) {
+      inClause = true;
+      labelMap[i] = 'sc-clause';
+      return;
+    }
+    if (inClause) { labelMap[i] = 'sc-clause'; return; }
+
+    // Adverbial words
+    if (ADV_WORDS.has(lw)) { labelMap[i] = 'sc-adv'; return; }
+
+    // Prepositions → start of adverbial/attribute phrase
+    if (/^(in|on|at|by|for|with|of|about|through|during|after|before|into|from|over|under|between|among|toward|towards|upon|within|without|along|across|behind|below|beside|beyond|despite|except|inside|outside|past|since|until|up|down|off|out)$/i.test(lw)) {
+      labelMap[i] = 'sc-adv'; return;
+    }
+
+    // Determiners/pronouns → part of noun phrase (subject or object)
+    if (/^(the|a|an|this|that|these|those|my|your|his|her|its|our|their|all|both|each|every|some|any|no|more|most|many|much|few|little|several|other|another|either|neither)$/i.test(lw)) {
+      labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj'; return;
+    }
+
+    // Verb detection by suffix
+    if (!foundVerb && i > 0 &&
+      (/^(is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|shall|should|may|might|must|can|could)$/i.test(lw) ||
+       /[aeiou]ted$|[^aeiou]ed$|[aeiou]ing$|[^t]ing$/.test(lw) && !/^(interesting|fascinating|compelling|existing|following|remaining)$/i.test(lw))) {
+      labelMap[i] = 'sc-verb';
+      foundVerb = true;
+      foundSubjEnd = true;
+      return;
+    }
+
+    // Noun detection by suffix
+    if (/(tion|sion|ness|ment|ity|ism|ist|ance|ence|ship|hood|age|ure|er|or)$/i.test(lw) && lw.length > 4) {
+      labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj'; return;
+    }
+
+    // Adjective by suffix
+    if (/(ive|ous|al|ic|ful|less|able|ible|ent|ant|ish|ary|ory|ical)$/i.test(lw) && lw.length > 4) {
+      labelMap[i] = 'sc-attr'; return;
+    }
+
+    // Adverb by suffix
+    if (/ly$/.test(lw) && lw.length > 4) { labelMap[i] = 'sc-adv'; return; }
+
+    // Capitalized mid-sentence → proper noun (subject)
+    if (i > 0 && w.text[0] === w.text[0].toUpperCase() && /[A-Z]/.test(w.text[0])) {
+      labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj'; return;
+    }
+
+    // Conjunction
+    if (/^(and|or|but|nor|so|yet|for|both|either|neither|not only|whether)$/i.test(lw)) {
+      labelMap[i] = 'sc-none'; return;
+    }
+
+    labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj';
+  });
+
+  return { words, labelMap, useOffset: false };
 }
 
 // ── English Dictionary ─────────────────────────────────────────
@@ -429,31 +553,27 @@ function onSentenceInput(){
 function renderTokens(s){
   const c=document.getElementById('token-display');
   c.innerHTML='';
-  if(window.nlp){
-    // compromise returns terms with pre/post whitespace and tags[]
-    const terms=nlp(s).terms().json();
-    terms.forEach(term=>{
-      if(term.pre)c.appendChild(document.createTextNode(term.pre));
-      const b=document.createElement('button');
-      b.className=`token-btn ${getTagClass(term.tags)}`;
-      b.textContent=term.text;
-      b.onclick=()=>selectWord(term.text,b);
-      c.appendChild(b);
-      if(term.post)c.appendChild(document.createTextNode(term.post));
-    });
-  }else{
-    // fallback: no colors
-    const tokens=s.match(/[\w']+|[^\w\s]|\s+/g)||[];
-    tokens.forEach(t=>{
-      if(/[a-zA-Z]/.test(t)){const b=document.createElement('button');b.className='token-btn pos-other';b.textContent=t;b.onclick=()=>selectWord(t,b);c.appendChild(b);}
-      else if(/\s+/.test(t)){c.appendChild(document.createTextNode(t));}
-      else{const sp=document.createElement('span');sp.className='token-punct';sp.textContent=t;c.appendChild(sp);}
-    });
-  }
+  const {words, labelMap, useOffset} = analyzeSentence(s);
+  let wordIdx = 0;
+  words.forEach(w=>{
+    if(!w.isWord){
+      // space or punctuation
+      if(/\s+/.test(w.text)) c.appendChild(document.createTextNode(w.text));
+      else { const sp=document.createElement('span');sp.className='sc-none';sp.textContent=w.text;c.appendChild(sp); }
+      return;
+    }
+    const b=document.createElement('button');
+    b.textContent=w.text;
+    const cls = useOffset ? (labelMap[w.start]||'sc-none') : (labelMap[wordIdx]||'sc-none');
+    b.className=`token-btn ${cls}`;
+    b.onclick=()=>selectWord(w.text,b);
+    c.appendChild(b);
+    wordIdx++;
+  });
 }
 async function selectWord(word,btn){
-  document.querySelectorAll('.token-btn').forEach(b=>b.classList.remove('pos-selected'));
-  btn.classList.add('pos-selected');curWord=word;
+  document.querySelectorAll('.token-btn').forEach(b=>b.classList.remove('sc-selected'));
+  btn.classList.add('sc-selected');curWord=word;
   document.getElementById('translation-box').style.display='none';
   document.getElementById('en-def-box').style.display='none';
   document.getElementById('save-alert').style.display='none';
