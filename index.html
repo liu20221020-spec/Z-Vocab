@@ -4,152 +4,159 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>单词本</title>
-<script src="https://cdn.jsdelivr.net/npm/compromise@14.14.0/builds/compromise.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fafaf9; color: #1c1917; min-height: 100vh; }
-  header { background: white; border-bottom: 1px solid #e7e5e4; position: sticky; top: 0; z-index: 10; }
-  nav { max-width: 640px; margin: 0 auto; padding: 0 12px; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  nav .logo { font-weight: 700; font-size: 17px; cursor: pointer; white-space: nowrap; }
-  nav .tabs { display: flex; gap: 2px; }
-  nav .tab-btn { background: none; border: none; cursor: pointer; font-size: 13px; color: #78716c; padding: 6px 10px; border-radius: 8px; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
-  nav .tab-btn:hover { color: #1c1917; background: #f5f5f4; }
-  nav .tab-btn.active { color: #1c1917; font-weight: 600; background: #f5f5f4; }
-  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; }
-  .page { display: none; }
-  .page.active { display: block; }
-  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #78716c; margin-bottom: 20px; }
-  textarea, input[type=text], input[type=password] { width: 100%; border: 1px solid #e7e5e4; border-radius: 12px; padding: 11px 14px; font-size: 15px; font-family: inherit; background: white; outline: none; transition: box-shadow 0.15s; resize: none; }
-  textarea:focus, input:focus { box-shadow: 0 0 0 2px #a8a29e; }
-  label.field { display: block; font-size: 12px; font-weight: 500; color: #57534e; margin-bottom: 5px; margin-top: 14px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 10px; padding: 9px 18px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; font-family: inherit; }
-  .btn-primary { background: #1c1917; color: white; width: 100%; padding: 12px; font-size: 15px; border-radius: 12px; margin-top: 4px; }
-  .btn-primary:hover { background: #292524; }
-  .btn-outline { background: white; color: #57534e; border: 1px solid #e7e5e4; font-size: 12px; padding: 5px 12px; border-radius: 999px; }
-  .btn-outline:hover { border-color: #a8a29e; }
-  .card { background: white; border: 1px solid #e7e5e4; border-radius: 14px; padding: 18px; }
-  .card + .card { margin-top: 8px; }
-  /* token */
-  #token-display { line-height: 2.8; font-size: 15px; }
-  .token-btn { background: none; border: none; cursor: pointer; border-radius: 3px; padding: 1px 3px; font-size: 15px; font-family: inherit; transition: background 0.1s; }
-  .token-btn:hover { background: rgba(0,0,0,0.06); }
-  .token-btn.sc-selected { outline: 2px solid #f59e0b!important; outline-offset: 1px; font-weight: 600; }
-  .token-punct { color: #a8a29e; }
-  /* translation box */
-  #translation-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 18px; margin-top: 14px; display: none; }
-  .badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #d97706; margin-bottom: 6px; }
-  .word-row-big { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .word-big { font-size: 22px; font-weight: 700; }
-  .word-cn { font-size: 15px; color: #57534e; }
-  .sentence-cn { font-size: 13px; color: #78716c; margin-top: 8px; line-height: 1.5; }
-  /* speak button */
-  .speak-btn { background: none; border: 1px solid #e7e5e4; border-radius: 999px; padding: 3px 10px; font-size: 12px; color: #78716c; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-  .speak-btn:hover { background: #f5f5f4; }
-  /* alerts */
-  .alert { border-radius: 12px; padding: 12px 14px; font-size: 13px; margin-top: 10px; display: none; }
-  .alert-green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-  .alert-red { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
-  .loading-text { color: #a8a29e; font-size: 13px; text-align: center; padding: 14px; display: none; align-items: center; justify-content: center; gap: 8px; }
-  /* review */
-  #review-counter { font-size: 12px; color: #a8a29e; margin-bottom: 10px; }
-  .review-card { min-height: 220px; }
-  .hint { font-size: 12px; color: #a8a29e; margin-bottom: 10px; }
-  .review-sentence { font-size: 15px; line-height: 2; color: #44403c; }
-  .blank { background: #fde68a; border-radius: 4px; padding: 0 4px; font-weight: 600; letter-spacing: 0.06em; color: transparent; user-select: none; }
-  .review-answer { border-top: 1px solid #f5f5f4; padding-top: 14px; margin-top: 14px; }
-  .answer-word { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-  .answer-cn { color: #78716c; font-size: 14px; margin-top: 3px; }
-  .answer-sentence { font-size: 13px; color: #a8a29e; margin-top: 6px; line-height: 1.5; }
-  .grade-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 10px; }
-  .grade-btn { border: 1px solid; border-radius: 10px; padding: 10px 4px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; line-height: 1.3; }
-  .grade-btn:hover { opacity: 0.8; }
-  .g0 { background:#fef2f2;color:#b91c1c;border-color:#fecaca; }
-  .g1 { background:#fff7ed;color:#c2410c;border-color:#fed7aa; }
-  .g2 { background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe; }
-  .g3 { background:#f0fdf4;color:#15803d;border-color:#bbf7d0; }
-  .mode-toggle { display:flex;gap:6px; }
-  .mode-btn { background:white;border:1px solid #e7e5e4;border-radius:999px;padding:4px 12px;font-size:12px;color:#78716c;cursor:pointer;font-family:inherit; }
-  .mode-btn.active { background:#1c1917;color:white;border-color:#1c1917; }
-  #done-screen { text-align:center;padding:50px 0;display:none; }
-  #done-screen .emoji { font-size:48px;margin-bottom:14px; }
-  #done-screen h2 { font-size:20px;font-weight:700;margin-bottom:6px; }
-  #done-screen p { color:#78716c;font-size:13px; }
-  /* words list */
-  .word-item { display:flex;align-items:flex-start;justify-content:space-between;gap:10px; }
-  .word-info { flex:1;min-width:0; }
-  .word-title { font-weight:600;font-size:15px; }
-  .word-cn-sm { color:#78716c;font-size:13px;margin-left:7px; }
-  .word-sent { font-size:11px;color:#a8a29e;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-  .word-meta { display:flex;align-items:center;gap:10px;flex-shrink:0; }
-  .due-today { color:#d97706;font-size:11px; }
-  .due-future { color:#a8a29e;font-size:11px; }
-  .mastered { color:#15803d;font-size:11px; }
-  .del-btn { background:none;border:none;cursor:pointer;color:#d4d4d2;font-size:11px;padding:2px 4px; }
-  .del-btn:hover { color:#f87171; }
-  .top-bar { display:flex;align-items:center;justify-content:space-between;margin-bottom:14px; }
-  .top-bar-btns { display:flex;gap:6px; }
-  #search { margin-bottom:14px; }
-  #empty-msg { text-align:center;color:#a8a29e;padding:50px 0;font-size:14px; }
-  /* stats */
-  .stat-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px; }
-  .stat-card { background:white;border:1px solid #e7e5e4;border-radius:14px;padding:16px; }
-  .stat-num { font-size:32px;font-weight:700;line-height:1; }
-  .stat-label { font-size:12px;color:#78716c;margin-top:4px; }
-  .stat-sub { font-size:11px;color:#a8a29e;margin-top:2px; }
-  .chart-wrap { background:white;border:1px solid #e7e5e4;border-radius:14px;padding:18px;margin-bottom:12px; }
-  .chart-title { font-size:13px;font-weight:600;margin-bottom:14px;color:#44403c; }
-  .bar-chart { display:flex;align-items:flex-end;gap:4px;height:80px; }
-  .bar-col { flex:1;display:flex;flex-direction:column;align-items:center;gap:4px; }
-  .bar { width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height 0.3s; }
-  .bar-label { font-size:9px;color:#a8a29e;white-space:nowrap; }
-  .bar-val { font-size:9px;color:#78716c; }
-  .heatmap { display:flex;flex-wrap:wrap;gap:3px; }
-  .heat-cell { width:14px;height:14px;border-radius:3px;background:#f5f5f4; }
-  .heat-0 { background:#f5f5f4; }
-  .heat-1 { background:#bbf7d0; }
-  .heat-2 { background:#4ade80; }
-  .heat-3 { background:#16a34a; }
-  .streak-row { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
-  .streak-num { font-size:28px;font-weight:700;color:#d97706; }
-  /* modal */
-  .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center;padding:16px; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:white;border-radius:18px;padding:24px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto; }
-  .modal h2 { font-size:17px;font-weight:700;margin-bottom:5px; }
-  .modal .desc { font-size:13px;color:#78716c;margin-bottom:18px;line-height:1.6; }
-  .modal-step { background:#f5f5f4;border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:12px;color:#44403c;line-height:1.7; }
-  .modal-step a { color:#0284c7;text-decoration:none; }
-  .modal-step code { background:#e7e5e4;border-radius:3px;padding:1px 5px;font-size:11px; }
-  .modal-footer { display:flex;gap:8px;margin-top:18px; }
-  .modal-footer .btn { flex:1; }
-  .btn-secondary { background:#f5f5f4;color:#44403c; }
-  .btn-secondary:hover { background:#e7e5e4; }
-  /* sync */
-  .sync-pill { font-size:11px;padding:4px 10px;border-radius:999px;border:none;cursor:pointer;font-family:inherit;white-space:nowrap; }
-  .sync-on { background:#f0fdf4;color:#15803d; }
-  .sync-off { background:#f5f5f4;color:#78716c; }
-  .spinner { display:inline-block;width:10px;height:10px;border:2px solid #a8a29e;border-top-color:#1c1917;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:3px;vertical-align:middle; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  #manual-area { margin-top:10px;display:none; }
-  /* Sentence structure colors — background highlight style */
-  .sc-subj  { background:#dbeafe;border-radius:3px;padding:1px 2px; }   /* 主语 blue   */
-  .sc-verb  { background:#dcfce7;border-radius:3px;padding:1px 2px; }   /* 谓语 green  */
-  .sc-obj   { background:#fed7aa;border-radius:3px;padding:1px 2px; }   /* 宾语 orange */
-  .sc-attr  { background:#ede9fe;border-radius:3px;padding:1px 2px; }   /* 定语 purple */
-  .sc-adv   { background:#fef9c3;border-radius:3px;padding:1px 2px; }   /* 状语 yellow */
-  .sc-clause{ background:#fce7f3;border-radius:3px;padding:1px 2px; }   /* 从句 pink   */
-  .sc-none  { color:#1c1917; }
-  .sc-selected { outline:2px solid #f59e0b;outline-offset:1px; }
-  .pos-legend  { display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f4; }
-  .legend-item { display:flex;align-items:center;gap:4px;font-size:11px;color:#57534e; }
-  .legend-dot  { width:10px;height:10px;border-radius:2px; }
-  /* English definition */
-  .en-def-box  { background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;margin-top:10px; }
-  .en-def-pos  { font-size:10px;font-weight:600;color:#0369a1;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px; }
-  .en-def-text { font-size:13px;color:#0c4a6e;line-height:1.5; }
-  .en-def-example { font-size:12px;color:#7dd3fc;margin-top:4px;font-style:italic; }
-  @media(max-width:420px) { .grade-grid{grid-template-columns:repeat(2,1fr)} .stat-grid{grid-template-columns:repeat(2,1fr)} nav .tab-btn{padding:5px 7px;font-size:12px} }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fafaf9; color: #1c1917; min-height: 100vh; }
+
+/* ── Nav ── */
+header { background: white; border-bottom: 1px solid #e7e5e4; position: sticky; top: 0; z-index: 10; }
+nav { max-width: 640px; margin: 0 auto; padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.logo { font-weight: 700; font-size: 17px; cursor: pointer; }
+.tabs { display: flex; gap: 2px; align-items: center; }
+.tab-btn { background: none; border: none; cursor: pointer; font-size: 13px; color: #78716c; padding: 6px 10px; border-radius: 8px; transition: all 0.15s; font-family: inherit; }
+.tab-btn:hover { color: #1c1917; background: #f5f5f4; }
+.tab-btn.active { color: #1c1917; font-weight: 600; background: #f5f5f4; }
+.sync-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; }
+.sync-on  { background: #f0fdf4; color: #15803d; }
+.sync-off { background: #f5f5f4; color: #78716c; }
+.spinner  { display: inline-block; width: 10px; height: 10px; border: 2px solid #a8a29e; border-top-color: #1c1917; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 3px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Layout ── */
+main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+.page { display: none; }
+.page.active { display: block; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #78716c; margin-bottom: 20px; }
+
+/* ── Form ── */
+textarea, input[type=text], input[type=password] {
+  width: 100%; border: 1px solid #e7e5e4; border-radius: 12px;
+  padding: 11px 14px; font-size: 15px; font-family: inherit;
+  background: white; outline: none; transition: box-shadow 0.15s; resize: none;
+}
+textarea:focus, input:focus { box-shadow: 0 0 0 2px #d4d0cc; }
+label.field { display: block; font-size: 12px; font-weight: 500; color: #57534e; margin: 14px 0 5px; }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 10px; padding: 9px 18px; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; font-family: inherit; }
+.btn:hover { opacity: 0.85; }
+.btn-dark { background: #1c1917; color: white; width: 100%; padding: 12px; font-size: 15px; border-radius: 12px; margin-top: 4px; }
+.btn-outline { background: white; color: #57534e; border: 1px solid #e7e5e4; font-size: 12px; padding: 5px 12px; border-radius: 999px; }
+.btn-outline:hover { border-color: #a8a29e; }
+
+/* ── Cards ── */
+.card { background: white; border: 1px solid #e7e5e4; border-radius: 14px; padding: 18px; }
+.card + .card { margin-top: 8px; }
+
+/* ── Token display ── */
+#token-card { margin-top: 14px; }
+#token-display { line-height: 2.6; font-size: 15px; }
+.tok {
+  background: none; border: none; cursor: pointer;
+  font-size: 15px; font-family: inherit; color: #1c1917;
+  padding: 2px 4px; border-radius: 6px;
+  transition: background 0.12s;
+}
+.tok:hover { background: #f0eeec; }
+.tok.active { background: #fde68a; font-weight: 600; }
+.tok-punct { color: #a8a29e; font-size: 15px; }
+
+/* ── Translation box ── */
+#translation-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 18px; margin-top: 14px; display: none; }
+.t-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #d97706; margin-bottom: 8px; }
+.t-word-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.t-word { font-size: 24px; font-weight: 700; }
+.t-cn   { font-size: 15px; color: #57534e; }
+.t-sentence { font-size: 13px; color: #78716c; line-height: 1.6; margin-bottom: 8px; }
+.speak-btn { background: white; border: 1px solid #e7e5e4; border-radius: 999px; padding: 3px 10px; font-size: 12px; color: #78716c; cursor: pointer; }
+.speak-btn:hover { background: #f5f5f4; }
+.en-def { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+.en-def-pos  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #0369a1; margin-bottom: 4px; }
+.en-def-text { font-size: 13px; color: #0c4a6e; line-height: 1.5; }
+.en-def-eg   { font-size: 12px; color: #7dd3fc; margin-top: 4px; font-style: italic; }
+#manual-area { margin-top: 10px; display: none; }
+.loading { color: #a8a29e; font-size: 13px; text-align: center; padding: 14px; display: none; align-items: center; justify-content: center; gap: 8px; }
+
+/* ── Alerts ── */
+.alert { border-radius: 12px; padding: 12px 14px; font-size: 13px; margin-top: 10px; display: none; }
+.alert-green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.alert-red   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+
+/* ── Review ── */
+.rev-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+#review-counter { font-size: 12px; color: #a8a29e; margin-bottom: 10px; }
+.rev-card { min-height: 200px; }
+.hint { font-size: 12px; color: #a8a29e; margin-bottom: 10px; }
+.rev-sentence { font-size: 15px; line-height: 2; color: #44403c; }
+.blank { background: #fde68a; border-radius: 3px; padding: 0 4px; color: transparent; user-select: none; }
+.rev-answer { border-top: 1px solid #f5f5f4; padding-top: 14px; margin-top: 14px; }
+.ans-word { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 3px; }
+.ans-cn   { color: #78716c; font-size: 14px; margin-bottom: 6px; }
+.ans-sent { font-size: 12px; color: #a8a29e; line-height: 1.5; }
+.mode-toggle { display: flex; gap: 6px; }
+.mode-btn { background: white; border: 1px solid #e7e5e4; border-radius: 999px; padding: 4px 12px; font-size: 12px; color: #78716c; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.mode-btn.active { background: #1c1917; color: white; border-color: #1c1917; }
+.grade-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 10px; }
+.grade-btn { border: 1px solid; border-radius: 10px; padding: 10px 4px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+.grade-btn:hover { opacity: 0.75; }
+.g0 { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+.g1 { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+.g2 { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.g3 { background:#f0fdf4; color:#15803d; border-color:#bbf7d0; }
+#done-screen { text-align: center; padding: 60px 0; display: none; }
+#done-screen .done-emoji { font-size: 48px; margin-bottom: 14px; }
+#done-screen h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+#done-screen p  { color: #78716c; font-size: 13px; }
+
+/* ── Words ── */
+.top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.top-bar-btns { display: flex; gap: 6px; }
+#search { margin-bottom: 14px; }
+.word-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.word-info { flex: 1; min-width: 0; }
+.word-en   { font-weight: 600; font-size: 15px; }
+.word-cn-s { color: #78716c; font-size: 13px; margin-left: 6px; }
+.word-sent { font-size: 11px; color: #a8a29e; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.word-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.tag-due      { color: #d97706; font-size: 11px; }
+.tag-future   { color: #a8a29e; font-size: 11px; }
+.tag-mastered { color: #15803d; font-size: 11px; }
+.del-btn { background: none; border: none; cursor: pointer; color: #d4d4d2; font-size: 11px; padding: 2px 4px; transition: color 0.1s; }
+.del-btn:hover { color: #f87171; }
+#empty-msg { text-align: center; color: #a8a29e; padding: 60px 0; font-size: 14px; }
+
+/* ── Stats ── */
+.stat-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+.stat-card { background: white; border: 1px solid #e7e5e4; border-radius: 14px; padding: 16px; }
+.stat-num   { font-size: 32px; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 12px; color: #78716c; margin-top: 4px; }
+.stat-sub   { font-size: 11px; color: #a8a29e; margin-top: 2px; }
+.chart-wrap { background: white; border: 1px solid #e7e5e4; border-radius: 14px; padding: 18px; margin-bottom: 12px; }
+.chart-title { font-size: 13px; font-weight: 600; color: #44403c; margin-bottom: 14px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 2px; }
+.bar-label { font-size: 9px; color: #a8a29e; }
+.bar-val   { font-size: 9px; color: #78716c; }
+
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: white; border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto; }
+.modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 5px; }
+.modal-desc { font-size: 13px; color: #78716c; margin-bottom: 18px; line-height: 1.6; }
+.modal-step { background: #f5f5f4; border-radius: 10px; padding: 11px 13px; margin-bottom: 8px; font-size: 12px; color: #44403c; line-height: 1.7; }
+.modal-step a { color: #0284c7; text-decoration: none; }
+.modal-footer { display: flex; gap: 8px; margin-top: 18px; }
+.modal-footer .btn { flex: 1; }
+.btn-gray { background: #f5f5f4; color: #44403c; }
+.btn-gray:hover { background: #e7e5e4; }
+
+@media (max-width: 420px) {
+  .grade-grid { grid-template-columns: repeat(2,1fr); }
+  .tab-btn { padding: 5px 7px; font-size: 12px; }
+}
 </style>
 </head>
 <body>
@@ -168,63 +175,57 @@
 </header>
 
 <main>
+
 <!-- ── ADD ── -->
 <div class="page active" id="page-add">
   <h1>添加生词</h1>
   <p class="subtitle">粘贴原文句子，点击要记的单词</p>
   <textarea id="sentence-input" rows="4" placeholder="粘贴你遇到的英文句子…" oninput="onSentenceInput()"></textarea>
-  <div class="card" id="token-card" style="margin-top:14px;display:none;">
-    <div style="margin-bottom:10px;">
-      <span style="font-size:12px;font-weight:600;color:#44403c;">句子成分标注</span>
-      <div class="pos-legend" style="margin-top:8px;padding:0;border:none;">
-        <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #93c5fd;"></div>主语</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #86efac;"></div>谓语</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#fed7aa;border:1px solid #fdba74;"></div>宾语</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ede9fe;border:1px solid #c4b5fd;"></div>定语</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;border:1px solid #fde047;"></div>状语</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#fce7f3;border:1px solid #f9a8d4;"></div>从句</div>
-      </div>
-    </div>
+
+  <div class="card" id="token-card" style="display:none;">
+    <p class="hint">点击要记忆的单词：</p>
     <div id="token-display"></div>
-    <p class="hint" style="margin-top:12px;margin-bottom:0;">点击任意单词可查看翻译并加入单词本</p>
   </div>
-  <div class="loading-text" id="translate-loading" style="display:none;"><span class="spinner"></span>翻译中…</div>
+
+  <div class="loading" id="translate-loading"><span class="spinner"></span>翻译中…</div>
+
   <div id="translation-box">
-    <div class="badge">单词</div>
-    <div class="word-row-big">
-      <span class="word-big" id="result-word"></span>
-      <span class="word-cn" id="result-word-cn"></span>
-      <button class="speak-btn" onclick="speak(document.getElementById('result-word').textContent)">🔊 发音</button>
+    <div class="t-badge">单词</div>
+    <div class="t-word-row">
+      <span class="t-word" id="res-word"></span>
+      <span class="t-cn"   id="res-word-cn"></span>
+      <button class="speak-btn" onclick="speak(document.getElementById('res-word').textContent)">🔊 发音</button>
     </div>
-    <div class="sentence-cn" id="result-sentence-cn"></div>
-    <div id="en-def-box" class="en-def-box" style="display:none;">
-      <div class="en-def-pos" id="en-def-pos"></div>
+    <div class="t-sentence" id="res-sent-cn"></div>
+    <div class="en-def" id="en-def-box" style="display:none;">
+      <div class="en-def-pos"  id="en-def-pos"></div>
       <div class="en-def-text" id="en-def-text"></div>
-      <div class="en-def-example" id="en-def-example"></div>
+      <div class="en-def-eg"   id="en-def-eg"></div>
     </div>
     <div id="manual-area">
       <label class="field" style="margin-top:0;">手动填写释义（翻译失败时）</label>
       <input type="text" id="manual-cn" placeholder="例如：精致的，优雅的">
     </div>
-    <button class="btn btn-primary" style="margin-top:14px;" onclick="saveWord()">加入单词本</button>
+    <button class="btn btn-dark" style="margin-top:14px;" onclick="saveWord()">加入单词本</button>
   </div>
+
   <div class="alert alert-green" id="save-alert">✓ 已保存！</div>
-  <div class="alert alert-red" id="error-alert"></div>
+  <div class="alert alert-red"   id="error-alert"></div>
 </div>
 
 <!-- ── REVIEW ── -->
 <div class="page" id="page-review">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+  <div class="rev-header">
     <h1>复习</h1>
     <div class="mode-toggle">
-      <button class="mode-btn active" id="mode-blank" onclick="setMode('blank')">看句填词</button>
-      <button class="mode-btn" id="mode-cn2en" onclick="setMode('cn2en')">中译英</button>
+      <button class="mode-btn active" id="mode-blank"  onclick="setMode('blank')">看句填词</button>
+      <button class="mode-btn"        id="mode-cn2en"  onclick="setMode('cn2en')">中译英</button>
     </div>
   </div>
   <div id="review-counter"></div>
   <div id="review-area"></div>
   <div id="done-screen">
-    <div class="emoji">🎉</div>
+    <div class="done-emoji">🎉</div>
     <h2>今日复习完成！</h2>
     <p>继续保持，明天还有新单词。</p>
   </div>
@@ -235,8 +236,10 @@
   <div class="top-bar">
     <h1>词库 <span id="word-count" style="font-weight:400;font-size:17px;color:#78716c;"></span></h1>
     <div class="top-bar-btns">
-      <button class="btn-outline btn" onclick="exportData()">导出</button>
-      <label class="btn-outline btn" style="cursor:pointer;">导入<input type="file" accept=".json" style="display:none;" onchange="importData(event)"></label>
+      <button class="btn btn-outline" onclick="exportData()">导出</button>
+      <label  class="btn btn-outline" style="cursor:pointer;">导入
+        <input type="file" accept=".json" style="display:none;" onchange="importData(event)">
+      </label>
     </div>
   </div>
   <input type="text" id="search" placeholder="搜索单词或释义…" oninput="renderWords()">
@@ -248,501 +251,521 @@
 <div class="page" id="page-stats">
   <h1>统计</h1>
   <p class="subtitle">你的学习进度一览</p>
-
   <div class="stat-grid" id="stat-grid"></div>
-
   <div class="chart-wrap">
     <div class="chart-title">最近 14 天 · 新增单词</div>
     <div class="bar-chart" id="bar-add"></div>
   </div>
-
   <div class="chart-wrap">
     <div class="chart-title">最近 14 天 · 复习次数</div>
     <div class="bar-chart" id="bar-review"></div>
   </div>
-
   <div class="chart-wrap">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="chart-title" style="margin:0;">单词掌握进度</div>
-    </div>
+    <div class="chart-title">单词掌握进度</div>
     <div id="mastery-bars"></div>
   </div>
 </div>
+
 </main>
 
-<!-- Settings Modal -->
+<!-- ── Settings Modal ── -->
 <div class="modal-overlay" id="settings-modal" onclick="closeSettingsIfOutside(event)">
   <div class="modal">
     <h2>云端同步设置</h2>
-    <p class="desc">用 Supabase 免费数据库同步 iPad、手机、电脑数据。</p>
-    <div style="font-size:12px;font-weight:600;color:#44403c;margin-bottom:7px;">设置步骤：</div>
+    <p class="modal-desc">用 Supabase 免费数据库同步 iPad、手机、电脑数据。</p>
     <div class="modal-step"><b>1.</b> 打开 <a href="https://supabase.com" target="_blank">supabase.com</a>，免费注册并新建项目</div>
-    <div class="modal-step"><b>2.</b> 进入项目 → <b>SQL Editor</b> → 粘贴下方代码运行：<br><br>
-      <code id="sql-code" style="display:block;white-space:pre-wrap;font-size:10px;line-height:1.7;">create table if not exists vocab_cards (
+    <div class="modal-step">
+      <b>2.</b> 进入项目 → <b>SQL Editor</b> → 运行：<br><br>
+      <code id="sql-code" style="display:block;background:#e7e5e4;border-radius:6px;padding:8px;font-size:11px;white-space:pre-wrap;line-height:1.6;">create table if not exists vocab_cards (
   sync_key text not null,
   data jsonb not null,
   updated_at timestamptz default now(),
   primary key (sync_key)
 );
 alter table vocab_cards disable row level security;</code>
-      <button onclick="copySql()" style="margin-top:7px;font-size:11px;background:#e7e5e4;border:none;border-radius:5px;padding:3px 9px;cursor:pointer;">复制 SQL</button>
+      <button onclick="copySql()" style="margin-top:7px;font-size:11px;background:#d4d0cc;border:none;border-radius:5px;padding:3px 10px;cursor:pointer;">复制 SQL</button>
     </div>
-    <div class="modal-step"><b>3.</b> 进入 <b>Project Settings → API</b>，复制 Project URL 和 anon public key 填入下方</div>
+    <div class="modal-step"><b>3.</b> 进入 <b>Project Settings → API</b>，复制 Project URL 和 anon public key</div>
     <label class="field">Project URL</label>
-    <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co">
+    <input type="text"     id="sb-url"     placeholder="https://xxxx.supabase.co">
     <label class="field">anon public key</label>
-    <input type="password" id="sb-key" placeholder="eyJhbGci…">
+    <input type="password" id="sb-key"     placeholder="eyJhbGci…">
     <label class="field">同步码（所有设备填同一个）</label>
-    <input type="text" id="sb-synckey" placeholder="例如：zoey2024">
-    <div class="alert alert-red" id="settings-error" style="margin-top:10px;"></div>
-    <div class="alert alert-green" id="settings-ok" style="margin-top:10px;"></div>
+    <input type="text"     id="sb-synckey" placeholder="例如：zoey2024">
+    <div class="alert alert-red"   id="settings-error" style="margin-top:10px;"></div>
+    <div class="alert alert-green" id="settings-ok"    style="margin-top:10px;"></div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeSettings()">取消</button>
-      <button class="btn btn-primary" style="width:auto;flex:2;" onclick="saveSettings()">连接并同步</button>
+      <button class="btn btn-gray" onclick="closeSettings()">取消</button>
+      <button class="btn btn-dark" style="width:auto;flex:2;" onclick="saveSettings()">连接并同步</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── SM-2 ───────────────────────────────────────────────────────
-function createCard(sentence,word,wordCn,sentenceCn){
-  return{id:Date.now().toString(36)+Math.random().toString(36).slice(2),sentence,word,wordCn,sentenceCn,createdAt:Date.now(),dueDate:Date.now(),interval:1,easeFactor:2.5,repetitions:0,reviewHistory:[]};
+// ── SM-2 ──────────────────────────────────────────────────────────────────────
+function createCard(sentence, word, wordCn, sentenceCn) {
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+    sentence, word, wordCn, sentenceCn,
+    createdAt: Date.now(),
+    dueDate: Date.now(),
+    interval: 1, easeFactor: 2.5, repetitions: 0,
+    reviewHistory: []
+  };
 }
-function reviewCard(card,grade){
-  let{interval,easeFactor,repetitions,reviewHistory=[]}=card;
-  if(grade<2){repetitions=0;interval=1;}
-  else{if(repetitions===0)interval=1;else if(repetitions===1)interval=6;else interval=Math.round(interval*easeFactor);repetitions++;}
-  easeFactor=Math.max(1.3,easeFactor+0.1-(3-grade)*(0.08+(3-grade)*0.02));
-  reviewHistory=[...reviewHistory,{date:todayStr(),grade}];
-  return{...card,interval,easeFactor,repetitions,reviewHistory,dueDate:Date.now()+interval*86400000};
+function reviewCard(card, grade) {
+  let { interval, easeFactor, repetitions, reviewHistory = [] } = card;
+  if (grade < 2) { repetitions = 0; interval = 1; }
+  else {
+    if (repetitions === 0) interval = 1;
+    else if (repetitions === 1) interval = 6;
+    else interval = Math.round(interval * easeFactor);
+    repetitions++;
+  }
+  easeFactor = Math.max(1.3, easeFactor + 0.1 - (3 - grade) * (0.08 + (3 - grade) * 0.02));
+  reviewHistory = [...reviewHistory, { date: today(), grade }];
+  return { ...card, interval, easeFactor, repetitions, reviewHistory, dueDate: Date.now() + interval * 86400000 };
 }
-function isDue(c){return c.dueDate<=Date.now();}
-function isMastered(c){return c.interval>=21;}
-function todayStr(){return new Date().toISOString().slice(0,10);}
+const isDue      = c => c.dueDate <= Date.now();
+const isMastered = c => c.interval >= 21;
+const today      = () => new Date().toISOString().slice(0, 10);
 
-// ── Storage ────────────────────────────────────────────────────
-function loadCards(){try{return JSON.parse(localStorage.getItem('vocab_cards')||'[]');}catch{return[];}}
-function saveLocal(cards){localStorage.setItem('vocab_cards',JSON.stringify(cards));}
-function addCard(card){const c=[card,...loadCards()];saveLocal(c);syncToCloud(c);}
-function updateCardLocal(u){const c=loadCards().map(x=>x.id===u.id?u:x);saveLocal(c);syncToCloud(c);}
-function deleteCardLocal(id){const c=loadCards().filter(x=>x.id!==id);saveLocal(c);syncToCloud(c);}
+// ── Storage ───────────────────────────────────────────────────────────────────
+const loadCards  = () => { try { return JSON.parse(localStorage.getItem('vocab_cards') || '[]'); } catch { return []; } };
+const saveLocal  = cards => localStorage.setItem('vocab_cards', JSON.stringify(cards));
+const addCard    = card  => { const c = [card, ...loadCards()]; saveLocal(c); syncUp(c); };
+const updateCard = u     => { const c = loadCards().map(x => x.id === u.id ? u : x); saveLocal(c); syncUp(c); };
+const deleteCard = id    => { const c = loadCards().filter(x => x.id !== id); saveLocal(c); syncUp(c); };
 
-// review activity log
-function logReview(date,count){
-  const key='vocab_review_log';
-  const log=JSON.parse(localStorage.getItem(key)||'{}');
-  log[date]=(log[date]||0)+count;
-  localStorage.setItem(key,JSON.stringify(log));
+function logReview(n) {
+  const log = JSON.parse(localStorage.getItem('vocab_review_log') || '{}');
+  log[today()] = (log[today()] || 0) + n;
+  localStorage.setItem('vocab_review_log', JSON.stringify(log));
 }
-function getReviewLog(){try{return JSON.parse(localStorage.getItem('vocab_review_log')||'{}');}catch{return{};}}
+const getReviewLog = () => { try { return JSON.parse(localStorage.getItem('vocab_review_log') || '{}'); } catch { return {}; } };
 
-// ── Supabase ───────────────────────────────────────────────────
-function getConfig(){return{url:localStorage.getItem('sb_url'),key:localStorage.getItem('sb_key'),syncKey:localStorage.getItem('sb_synckey')};}
-function isConfigured(){const c=getConfig();return!!(c.url&&c.key&&c.syncKey);}
-async function syncToCloud(cards){
-  if(!isConfigured())return;
-  const{url,key,syncKey}=getConfig();
-  try{
-    await fetch(`${url}/rest/v1/vocab_cards`,{method:'POST',headers:{'apikey':key,'Authorization':`Bearer ${key}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({sync_key:syncKey,data:cards,updated_at:new Date().toISOString()})});
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const getCfg       = () => ({ url: localStorage.getItem('sb_url'), key: localStorage.getItem('sb_key'), syncKey: localStorage.getItem('sb_synckey') });
+const isConfigured = () => { const c = getCfg(); return !!(c.url && c.key && c.syncKey); };
+
+async function syncUp(cards) {
+  if (!isConfigured()) return;
+  const { url, key, syncKey } = getCfg();
+  try {
+    await fetch(`${url}/rest/v1/vocab_cards`, {
+      method: 'POST',
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({ sync_key: syncKey, data: cards, updated_at: new Date().toISOString() })
+    });
     setSyncStatus(true);
-  }catch(e){console.warn('sync failed',e);}
-}
-async function syncFromCloud(){
-  if(!isConfigured())return null;
-  const{url,key,syncKey}=getConfig();
-  const r=await fetch(`${url}/rest/v1/vocab_cards?sync_key=eq.${encodeURIComponent(syncKey)}&select=data`,{headers:{'apikey':key,'Authorization':`Bearer ${key}`}});
-  const text=await r.text();
-  if(!r.ok)throw new Error(`HTTP ${r.status}: ${text}`);
-  const rows=JSON.parse(text);
-  return rows.length>0?rows[0].data:null;
-}
-function setSyncStatus(state){
-  const btn=document.getElementById('sync-btn');
-  if(state===true){btn.textContent='已同步';btn.className='sync-pill sync-on';}
-  else if(state==='syncing'){btn.innerHTML='<span class="spinner"></span>同步中';btn.className='sync-pill sync-on';}
-  else{btn.textContent='同步';btn.className='sync-pill sync-off';}
+  } catch(e) { console.warn('syncUp failed', e); }
 }
 
-// ── Translation ────────────────────────────────────────────────
-async function translate(text){
-  try{const r=await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`);const d=await r.json();return d[0].map(x=>x[0]).join('');}catch{}
-  try{const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh`);const d=await r.json();return d.responseData?.translatedText||'';}catch{}
-  return'';
-}
-
-// ── Sentence Structure Analysis ────────────────────────────────
-const SC_COLORS = {
-  subj:   'background:#dbeafe;border-radius:3px;padding:1px 3px;',
-  verb:   'background:#dcfce7;border-radius:3px;padding:1px 3px;',
-  obj:    'background:#fed7aa;border-radius:3px;padding:1px 3px;',
-  attr:   'background:#ede9fe;border-radius:3px;padding:1px 3px;',
-  adv:    'background:#fef9c3;border-radius:3px;padding:1px 3px;',
-  clause: 'background:#fce7f3;border-radius:3px;padding:1px 3px;',
-  none:   ''
-};
-
-const CLAUSE_WORDS = new Set(['that','which','who','whom','whose','where','when','while','although','though','because','since','unless','until','whether','how','whatever','whoever','whenever','wherever','however']);
-const PREPS = new Set(['in','on','at','by','for','with','of','about','through','during','after','before','into','from','over','under','between','among','toward','towards','upon','within','without','along','across','despite','except','past','since','until','up','down','off','out','as','like','near','than','via','per']);
-const DETS = new Set(['the','a','an','this','that','these','those','my','your','his','her','its','our','their','all','both','each','every','some','any','no','more','most','many','much','few','little','several','other','another','either','neither','one','two','three']);
-const CONJS = new Set(['and','or','but','nor','so','yet','for','both','either','neither']);
-const AUX_VERBS = new Set(['is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','must','can','could','seem','seems','seemed','appear','appears','appeared','become','becomes','became']);
-const ADV_WORDS = new Set(['almost','also','already','always','just','never','not','now','often','only','quite','really','recently','sometimes','soon','still','then','too','very','yet','again','even','here','maybe','perhaps','rather','so','there','thus','hence','therefore','once','twice','nearly','hardly','scarcely','merely','simply','truly','largely','mainly','mostly','partly','fully','highly','deeply','widely','clearly','generally']);
-
-function classifyWord(w, i, wordList) {
-  const lw = w.toLowerCase();
-  // clause introducer
-  if (CLAUSE_WORDS.has(lw) && i > 0) return 'clause';
-  // conjunction → none
-  if (CONJS.has(lw)) return 'none';
-  // preposition → adv/state
-  if (PREPS.has(lw)) return 'adv';
-  // determiner → part of noun group, pass to context
-  if (DETS.has(lw)) return null; // resolved by context
-  // adverb words
-  if (ADV_WORDS.has(lw)) return 'adv';
-  // -ly suffix = adverb
-  if (lw.length > 4 && lw.endsWith('ly')) return 'adv';
-  // auxiliary verbs
-  if (AUX_VERBS.has(lw)) return 'verb';
-  // past tense / -ed = verb
-  if (lw.length > 4 && /[^aeiou]ed$/.test(lw)) return 'verb';
-  // common verb endings (not -ness words)
-  if (lw.length > 5 && /[aeiou]te[sd]?$/.test(lw) && !/ness$/.test(lw)) return 'verb';
-  // -ing = verb (when not after determiner)
-  if (lw.length > 5 && lw.endsWith('ing') && i > 0 && !DETS.has(wordList[i-1]?.toLowerCase())) return 'verb';
-  // adjective suffixes
-  if (lw.length > 5 && /(ive|ous|ial|ical|ful|less|able|ible|ent|ant|ish|ory|ary|atory)$/.test(lw)) return 'attr';
-  // noun suffixes
-  if (lw.length > 4 && /(tion|sion|ness|ment|ity|ism|ist|ance|ence|ship|hood|ure)$/.test(lw)) return null; // noun, resolved by context
-  // pronouns → subject
-  if (/^(i|he|she|they|we|you|it)$/i.test(lw)) return 'subj';
-  // object pronouns
-  if (/^(me|him|her|them|us|you|it)$/i.test(lw) && i > 0) return 'obj';
-  return null; // context-dependent
-}
-
-function analyzeSentence(s) {
-  const tokens = s.match(/[\w']+|[^\w\s]|\s+/g) || [];
-  const wordList = tokens.filter(t => /[a-zA-Z]/.test(t));
-
-  // First pass: classify each word
-  const raw = wordList.map((w, i) => ({ w, cls: classifyWord(w, i, wordList) }));
-
-  // Second pass: find first verb index to split subject / object
-  let firstVerbIdx = raw.findIndex(r => r.cls === 'verb');
-  if (firstVerbIdx === -1) firstVerbIdx = Math.floor(wordList.length / 2);
-
-  // Third pass: resolve nulls by position
-  let inClause = false;
-  const resolved = raw.map((r, i) => {
-    if (r.cls === 'clause') { inClause = true; return 'clause'; }
-    if (inClause) return 'clause';
-    if (r.cls !== null) return r.cls;
-    // null = context-dependent noun/det
-    if (i < firstVerbIdx) return 'subj';
-    if (i === firstVerbIdx) return 'verb';
-    return 'obj';
+async function syncDown() {
+  if (!isConfigured()) return null;
+  const { url, key, syncKey } = getCfg();
+  const r = await fetch(`${url}/rest/v1/vocab_cards?sync_key=eq.${encodeURIComponent(syncKey)}&select=data`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` }
   });
-
-  return { tokens, wordLabels: resolved };
+  const text = await r.text();
+  if (!r.ok) throw new Error(`${r.status}: ${text}`);
+  const rows = JSON.parse(text);
+  return rows.length ? rows[0].data : null;
 }
 
-// ── English Dictionary ─────────────────────────────────────────
-async function fetchEnDef(word){
-  try{
-    const r=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
-    if(!r.ok)return null;
-    const data=await r.json();
-    const meanings=data[0]?.meanings;
-    if(!meanings?.length)return null;
-    // pick first meaning
-    const m=meanings[0];
-    const def=m.definitions[0];
-    return{pos:m.partOfSpeech,def:def.definition,example:def.example||''};
-  }catch{return null;}
+function setSyncStatus(state) {
+  const btn = document.getElementById('sync-btn');
+  if (state === true)      { btn.textContent = '已同步'; btn.className = 'sync-pill sync-on'; }
+  else if (state === 'ing') { btn.innerHTML = '<span class="spinner"></span>同步中'; btn.className = 'sync-pill sync-on'; }
+  else                     { btn.textContent = '同步'; btn.className = 'sync-pill sync-off'; }
 }
 
-// ── Speak ──────────────────────────────────────────────────────
-function speak(word){
-  if(!word||!window.speechSynthesis)return;
+// ── Translate ─────────────────────────────────────────────────────────────────
+async function translate(text) {
+  try {
+    const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`);
+    const d = await r.json();
+    return d[0].map(x => x[0]).join('');
+  } catch {}
+  try {
+    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh`);
+    const d = await r.json();
+    return d.responseData?.translatedText || '';
+  } catch {}
+  return '';
+}
+
+async function fetchEnDef(word) {
+  try {
+    const r = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const m = data[0]?.meanings?.[0];
+    if (!m) return null;
+    const d = m.definitions[0];
+    return { pos: m.partOfSpeech, def: d.definition, example: d.example || '' };
+  } catch { return null; }
+}
+
+// ── Speak ─────────────────────────────────────────────────────────────────────
+function speak(word) {
+  if (!word || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(word);
-  u.lang='en-US';u.rate=0.9;
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'en-US'; u.rate = 0.9;
   window.speechSynthesis.speak(u);
 }
 
-// ── Nav ────────────────────────────────────────────────────────
-function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['add','review','words','stats'][i]===name));
-  document.getElementById('page-'+name).classList.add('active');
-  const pull=(fn)=>isConfigured()?syncFromCloud().then(c=>{if(c)saveLocal(c);}).catch(()=>{}):Promise.resolve();
-  if(name==='review'){setSyncStatus('syncing');pull().finally(()=>{setSyncStatus(true);initReview();});}
-  if(name==='words'){renderWords();if(isConfigured()){setSyncStatus('syncing');syncFromCloud().then(c=>{if(c){saveLocal(c);renderWords();}setSyncStatus(true);}).catch(()=>setSyncStatus(true));}}
-  if(name==='stats'){renderStats();}
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['add','review','words','stats'][i] === name));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'review') {
+    setSyncStatus('ing');
+    (isConfigured() ? syncDown().then(c => { if (c) saveLocal(c); }).catch(() => {}) : Promise.resolve())
+      .finally(() => { setSyncStatus(isConfigured() ? true : false); initReview(); });
+  }
+  if (name === 'words') {
+    renderWords();
+    if (isConfigured()) {
+      setSyncStatus('ing');
+      syncDown().then(c => { if (c) { saveLocal(c); renderWords(); } setSyncStatus(true); }).catch(() => setSyncStatus(true));
+    }
+  }
+  if (name === 'stats') renderStats();
 }
 
-// ── Add ────────────────────────────────────────────────────────
-let curWord='',curWordCn='',curSentenceCn='';
-function onSentenceInput(){
-  const s=document.getElementById('sentence-input').value.trim();
-  curWord='';curWordCn='';curSentenceCn='';
-  document.getElementById('translation-box').style.display='none';
-  document.getElementById('save-alert').style.display='none';
-  document.getElementById('error-alert').style.display='none';
-  document.getElementById('token-card').style.display=s?'block':'none';
-  if(s)renderTokens(s);
+// ── Add page ──────────────────────────────────────────────────────────────────
+let curWord = '', curWordCn = '', curSentenceCn = '';
+
+function onSentenceInput() {
+  const s = document.getElementById('sentence-input').value.trim();
+  curWord = ''; curWordCn = ''; curSentenceCn = '';
+  document.getElementById('translation-box').style.display = 'none';
+  document.getElementById('save-alert').style.display = 'none';
+  document.getElementById('error-alert').style.display = 'none';
+  document.getElementById('token-card').style.display = s ? 'block' : 'none';
+  if (s) renderTokens(s);
 }
-function renderTokens(s){
-  const c=document.getElementById('token-display');
-  c.innerHTML='';
-  const {tokens, wordLabels} = analyzeSentence(s);
-  let wi=0;
-  tokens.forEach(t=>{
-    if(/[a-zA-Z]/.test(t)){
-      const b=document.createElement('button');
-      b.textContent=t;
-      const label=wordLabels[wi]||'none';
-      // use inline style to guarantee color shows regardless of CSS specificity
-      b.setAttribute('style', `${SC_COLORS[label]}border:none;cursor:pointer;font-size:15px;font-family:inherit;transition:opacity 0.1s;`);
-      b.onmouseenter=()=>b.style.opacity='0.75';
-      b.onmouseleave=()=>b.style.opacity='1';
-      b.onclick=()=>selectWord(t,b);
+
+function renderTokens(s) {
+  const tokens = s.match(/[\w']+|[^\w\s]|\s+/g) || [];
+  const c = document.getElementById('token-display');
+  c.innerHTML = '';
+  tokens.forEach(t => {
+    if (/[a-zA-Z]/.test(t)) {
+      const b = document.createElement('button');
+      b.className = 'tok';
+      b.textContent = t;
+      b.onclick = () => selectWord(t, b);
       c.appendChild(b);
-      wi++;
-    } else if(/\s+/.test(t)){
+    } else if (/\s+/.test(t)) {
       c.appendChild(document.createTextNode(t));
     } else {
-      const sp=document.createElement('span');sp.style.color='#a8a29e';sp.textContent=t;c.appendChild(sp);
+      const sp = document.createElement('span');
+      sp.className = 'tok-punct';
+      sp.textContent = t;
+      c.appendChild(sp);
     }
   });
 }
-async function selectWord(word,btn){
-  // reset previous selection outline
-  document.querySelectorAll('#token-display button').forEach(b=>b.style.outline='');
-  btn.style.outline='2px solid #f59e0b';btn.style.outlineOffset='1px';curWord=word;
-  document.getElementById('translation-box').style.display='none';
-  document.getElementById('en-def-box').style.display='none';
-  document.getElementById('save-alert').style.display='none';
-  document.getElementById('error-alert').style.display='none';
-  document.getElementById('manual-area').style.display='none';
-  document.getElementById('translate-loading').style.display='flex';
-  try{
-    const sentence=document.getElementById('sentence-input').value.trim();
-    // fetch all three in parallel
-    const[wCn,sCn,enDef]=await Promise.all([translate(word),translate(sentence),fetchEnDef(word)]);
-    curWordCn=wCn;curSentenceCn=sCn;
-    document.getElementById('result-word').textContent=word;
-    document.getElementById('result-word-cn').textContent=wCn||'';
-    document.getElementById('result-sentence-cn').textContent=sCn;
-    document.getElementById('manual-area').style.display=wCn?'none':'block';
-    // show English definition
-    if(enDef){
-      document.getElementById('en-def-pos').textContent=enDef.pos;
-      document.getElementById('en-def-text').textContent=enDef.def;
-      document.getElementById('en-def-example').textContent=enDef.example?`"${enDef.example}"`:'';
-      document.getElementById('en-def-box').style.display='block';
+
+async function selectWord(word, btn) {
+  document.querySelectorAll('.tok').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  curWord = word;
+  document.getElementById('translation-box').style.display = 'none';
+  document.getElementById('en-def-box').style.display = 'none';
+  document.getElementById('save-alert').style.display = 'none';
+  document.getElementById('error-alert').style.display = 'none';
+  document.getElementById('manual-area').style.display = 'none';
+  document.getElementById('translate-loading').style.display = 'flex';
+  try {
+    const sentence = document.getElementById('sentence-input').value.trim();
+    const [wCn, sCn, enDef] = await Promise.all([translate(word), translate(sentence), fetchEnDef(word)]);
+    curWordCn = wCn; curSentenceCn = sCn;
+    document.getElementById('res-word').textContent = word;
+    document.getElementById('res-word-cn').textContent = wCn || '';
+    document.getElementById('res-sent-cn').textContent = sCn;
+    document.getElementById('manual-area').style.display = wCn ? 'none' : 'block';
+    if (enDef) {
+      document.getElementById('en-def-pos').textContent  = enDef.pos;
+      document.getElementById('en-def-text').textContent = enDef.def;
+      document.getElementById('en-def-eg').textContent   = enDef.example ? `"${enDef.example}"` : '';
+      document.getElementById('en-def-box').style.display = 'block';
     }
-  }catch{
-    document.getElementById('result-word').textContent=word;
-    document.getElementById('result-word-cn').textContent='';
-    document.getElementById('result-sentence-cn').textContent='';
-    document.getElementById('manual-area').style.display='block';
-  }finally{
-    document.getElementById('translate-loading').style.display='none';
-    document.getElementById('translation-box').style.display='block';
+  } catch {
+    document.getElementById('res-word').textContent = word;
+    document.getElementById('res-word-cn').textContent = '';
+    document.getElementById('res-sent-cn').textContent = '';
+    document.getElementById('manual-area').style.display = 'block';
+  } finally {
+    document.getElementById('translate-loading').style.display = 'none';
+    document.getElementById('translation-box').style.display = 'block';
   }
 }
-function saveWord(){
-  const sentence=document.getElementById('sentence-input').value.trim();
-  const manualCn=document.getElementById('manual-cn').value.trim();
-  const finalCn=curWordCn||manualCn;
-  if(!sentence||!curWord||!finalCn){const e=document.getElementById('error-alert');e.textContent='请先选择单词并填写释义';e.style.display='block';return;}
-  addCard(createCard(sentence,curWord,finalCn,curSentenceCn));
-  document.getElementById('sentence-input').value='';
-  document.getElementById('token-card').style.display='none';
-  document.getElementById('translation-box').style.display='none';
-  document.getElementById('manual-cn').value='';
-  const a=document.getElementById('save-alert');a.style.display='block';
-  setTimeout(()=>a.style.display='none',2500);curWord='';
+
+function saveWord() {
+  const sentence = document.getElementById('sentence-input').value.trim();
+  const manualCn = document.getElementById('manual-cn').value.trim();
+  const finalCn  = curWordCn || manualCn;
+  if (!sentence || !curWord || !finalCn) {
+    const e = document.getElementById('error-alert');
+    e.textContent = '请先选择单词并填写释义'; e.style.display = 'block'; return;
+  }
+  addCard(createCard(sentence, curWord, finalCn, curSentenceCn));
+  document.getElementById('sentence-input').value = '';
+  document.getElementById('token-card').style.display = 'none';
+  document.getElementById('translation-box').style.display = 'none';
+  document.getElementById('manual-cn').value = '';
+  const a = document.getElementById('save-alert');
+  a.style.display = 'block'; setTimeout(() => a.style.display = 'none', 2500);
+  curWord = '';
 }
 
-// ── Review ─────────────────────────────────────────────────────
-let reviewQueue=[],reviewIndex=0,reviewMode='blank',sessionReviewed=0;
-function setMode(m){reviewMode=m;document.getElementById('mode-blank').classList.toggle('active',m==='blank');document.getElementById('mode-cn2en').classList.toggle('active',m==='cn2en');renderReview();}
-function initReview(){reviewQueue=loadCards().filter(isDue);reviewIndex=0;sessionReviewed=0;renderReview();}
-function renderReview(){
-  const area=document.getElementById('review-area'),done=document.getElementById('done-screen'),ctr=document.getElementById('review-counter');
-  if(!reviewQueue.length){area.innerHTML='';ctr.textContent='';done.style.display='block';return;}
-  done.style.display='none';
-  const remaining=reviewQueue.length-reviewIndex;
-  ctr.textContent=`${reviewIndex+1} / ${reviewQueue.length}`;
-  const card=reviewQueue[reviewIndex];
-  if(reviewMode==='blank'){
-    area.innerHTML=`<div class="card review-card">
+// ── Review ────────────────────────────────────────────────────────────────────
+let reviewQueue = [], reviewIndex = 0, reviewMode = 'blank';
+
+function setMode(m) {
+  reviewMode = m;
+  document.getElementById('mode-blank').classList.toggle('active', m === 'blank');
+  document.getElementById('mode-cn2en').classList.toggle('active', m === 'cn2en');
+  renderReview();
+}
+
+function initReview() {
+  reviewQueue = loadCards().filter(isDue);
+  reviewIndex = 0;
+  renderReview();
+}
+
+function renderReview() {
+  const area = document.getElementById('review-area');
+  const done = document.getElementById('done-screen');
+  const ctr  = document.getElementById('review-counter');
+  if (!reviewQueue.length) { area.innerHTML = ''; ctr.textContent = ''; done.style.display = 'block'; return; }
+  done.style.display = 'none';
+  ctr.textContent = `${reviewIndex + 1} / ${reviewQueue.length}`;
+  const card = reviewQueue[reviewIndex];
+  const safeWord = card.word.replace(/'/g, "\\'");
+  if (reviewMode === 'blank') {
+    area.innerHTML = `<div class="card rev-card">
       <p class="hint">在句子中找到这个词：</p>
-      <p class="review-sentence">${blankSentence(card.sentence,card.word)}</p>
-      <div class="review-answer" id="ans" style="display:none;">
-        <div class="answer-word">${card.word}<button class="speak-btn" onclick="speak('${card.word.replace(/'/g,"\\'")}')">🔊</button></div>
-        <div class="answer-cn">${card.wordCn}</div>
-        <div class="answer-sentence">${card.sentenceCn||''}</div>
+      <p class="rev-sentence">${blankSentence(card.sentence, card.word)}</p>
+      <div class="rev-answer" id="ans" style="display:none;">
+        <div class="ans-word">${card.word}<button class="speak-btn" onclick="speak('${safeWord}')">🔊</button></div>
+        <div class="ans-cn">${card.wordCn}</div>
+        <div class="ans-sent">${card.sentenceCn || ''}</div>
       </div>
-    </div><div id="action-area" style="margin-top:10px;"><button class="btn btn-primary" onclick="revealAnswer()">显示答案</button></div>`;
-  }else{
-    area.innerHTML=`<div class="card review-card">
+    </div>
+    <div id="action-area" style="margin-top:10px;">
+      <button class="btn btn-dark" onclick="revealAnswer()">显示答案</button>
+    </div>`;
+  } else {
+    area.innerHTML = `<div class="card rev-card">
       <p class="hint">这个中文对应的英文单词是：</p>
       <p style="font-size:22px;font-weight:700;margin-bottom:6px;">${card.wordCn}</p>
-      <p style="font-size:12px;color:#a8a29e;">${card.sentenceCn||''}</p>
-      <div class="review-answer" id="ans" style="display:none;">
-        <div class="answer-word" style="color:#d97706;">${card.word}<button class="speak-btn" onclick="speak('${card.word.replace(/'/g,"\\'")}')">🔊</button></div>
-        <div class="answer-sentence" style="font-size:13px;color:#57534e;margin-top:6px;">${card.sentence}</div>
+      <p style="font-size:12px;color:#a8a29e;">${card.sentenceCn || ''}</p>
+      <div class="rev-answer" id="ans" style="display:none;">
+        <div class="ans-word" style="color:#d97706;">${card.word}<button class="speak-btn" onclick="speak('${safeWord}')">🔊</button></div>
+        <div class="ans-sent" style="font-size:13px;color:#57534e;margin-top:6px;">${card.sentence}</div>
       </div>
-    </div><div id="action-area" style="margin-top:10px;"><button class="btn btn-primary" onclick="revealAnswer()">显示答案</button></div>`;
+    </div>
+    <div id="action-area" style="margin-top:10px;">
+      <button class="btn btn-dark" onclick="revealAnswer()">显示答案</button>
+    </div>`;
   }
 }
-function blankSentence(s,w){return s.replace(new RegExp(w,'gi'),m=>`<span class="blank">${'█'.repeat(m.length)}</span>`);}
-function revealAnswer(){
-  document.getElementById('ans').style.display='block';
-  document.getElementById('action-area').innerHTML=`<p style="font-size:11px;color:#a8a29e;text-align:center;margin-bottom:8px;">你记得吗？</p>
-  <div class="grade-grid">
-    <button class="grade-btn g0" onclick="gradeCard(0)">完全不记得</button>
-    <button class="grade-btn g1" onclick="gradeCard(1)">有点印象</button>
-    <button class="grade-btn g2" onclick="gradeCard(2)">记得</button>
-    <button class="grade-btn g3" onclick="gradeCard(3)">很熟悉</button>
-  </div>`;
-}
-function gradeCard(grade){
-  const updated=reviewCard(reviewQueue[reviewIndex],grade);
-  updateCardLocal(updated);reviewQueue[reviewIndex]=updated;sessionReviewed++;
-  logReview(todayStr(),1);
-  reviewIndex++;
-  if(reviewIndex>=reviewQueue.length){document.getElementById('review-area').innerHTML='';document.getElementById('review-counter').textContent='';document.getElementById('done-screen').style.display='block';}
-  else renderReview();
+
+function blankSentence(s, w) {
+  return s.replace(new RegExp(w, 'gi'), m => `<span class="blank">${'█'.repeat(m.length)}</span>`);
 }
 
-// ── Words ──────────────────────────────────────────────────────
-function renderWords(){
-  const cards=loadCards(),search=(document.getElementById('search').value||'').toLowerCase();
-  const filtered=cards.filter(c=>c.word.toLowerCase().includes(search)||c.wordCn.includes(search));
-  document.getElementById('word-count').textContent=`(${cards.length})`;
-  const list=document.getElementById('words-list'),empty=document.getElementById('empty-msg');
-  if(!filtered.length){list.innerHTML='';empty.style.display='block';empty.textContent=cards.length?'没有匹配的单词':'还没有单词，去添加第一个吧！';return;}
-  empty.style.display='none';
-  list.innerHTML=filtered.map(c=>{
-    const diff=c.dueDate-Date.now();
-    const due=isMastered(c)?`<span class="mastered">已掌握</span>`:diff<=0?`<span class="due-today">今天复习</span>`:`<span class="due-future">${Math.ceil(diff/86400000)}天后</span>`;
-    return `<div class="card word-item"><div class="word-info"><span class="word-title">${c.word}</span><span class="word-cn-sm">${c.wordCn}</span><div class="word-sent">${c.sentence}</div></div><div class="word-meta">${due}<button class="speak-btn" onclick="speak('${c.word.replace(/'/g,"\\'")}')">🔊</button><button class="del-btn" onclick="removeCard('${c.id}')">删除</button></div></div>`;
+function revealAnswer() {
+  document.getElementById('ans').style.display = 'block';
+  document.getElementById('action-area').innerHTML = `
+    <p style="font-size:11px;color:#a8a29e;text-align:center;margin-bottom:8px;">你记得吗？</p>
+    <div class="grade-grid">
+      <button class="grade-btn g0" onclick="gradeCard(0)">完全不记得</button>
+      <button class="grade-btn g1" onclick="gradeCard(1)">有点印象</button>
+      <button class="grade-btn g2" onclick="gradeCard(2)">记得</button>
+      <button class="grade-btn g3" onclick="gradeCard(3)">很熟悉</button>
+    </div>`;
+}
+
+function gradeCard(grade) {
+  const updated = reviewCard(reviewQueue[reviewIndex], grade);
+  updateCard(updated);
+  reviewQueue[reviewIndex] = updated;
+  logReview(1);
+  reviewIndex++;
+  if (reviewIndex >= reviewQueue.length) {
+    document.getElementById('review-area').innerHTML = '';
+    document.getElementById('review-counter').textContent = '';
+    document.getElementById('done-screen').style.display = 'block';
+  } else renderReview();
+}
+
+// ── Words ─────────────────────────────────────────────────────────────────────
+function renderWords() {
+  const cards  = loadCards();
+  const search = (document.getElementById('search').value || '').toLowerCase();
+  const filtered = cards.filter(c => c.word.toLowerCase().includes(search) || c.wordCn.includes(search));
+  document.getElementById('word-count').textContent = `(${cards.length})`;
+  const list  = document.getElementById('words-list');
+  const empty = document.getElementById('empty-msg');
+  if (!filtered.length) {
+    list.innerHTML = ''; empty.style.display = 'block';
+    empty.textContent = cards.length ? '没有匹配的单词' : '还没有单词，去添加第一个吧！'; return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(c => {
+    const diff = c.dueDate - Date.now();
+    const tag  = isMastered(c)
+      ? `<span class="tag-mastered">已掌握</span>`
+      : diff <= 0
+        ? `<span class="tag-due">今天复习</span>`
+        : `<span class="tag-future">${Math.ceil(diff / 86400000)}天后</span>`;
+    const sw = c.word.replace(/'/g, "\\'");
+    return `<div class="card word-item">
+      <div class="word-info">
+        <span class="word-en">${c.word}</span><span class="word-cn-s">${c.wordCn}</span>
+        <div class="word-sent">${c.sentence}</div>
+      </div>
+      <div class="word-meta">
+        ${tag}
+        <button class="speak-btn" onclick="speak('${sw}')">🔊</button>
+        <button class="del-btn" onclick="removeCard('${c.id}')">删除</button>
+      </div>
+    </div>`;
   }).join('');
 }
-function removeCard(id){deleteCardLocal(id);renderWords();}
-function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(loadCards(),null,2)],{type:'application/json'}));a.download='vocab-backup.json';a.click();}
-function importData(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{try{saveLocal(JSON.parse(ev.target.result));renderWords();}catch{alert('文件格式错误');}};r.readAsText(file);}
 
-// ── Stats ──────────────────────────────────────────────────────
-function renderStats(){
-  const cards=loadCards();
-  const total=cards.length;
-  const mastered=cards.filter(isMastered).length;
-  const dueToday=cards.filter(isDue).length;
-  const reviewLog=getReviewLog();
+function removeCard(id) { deleteCard(id); renderWords(); }
 
-  // streak
-  let streak=0;
-  const today=new Date();
-  for(let i=0;i<365;i++){
-    const d=new Date(today);d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10);
-    if(reviewLog[k]||cards.some(c=>c.createdAt&&new Date(c.createdAt).toISOString().slice(0,10)===k)){streak++;}
-    else if(i>0)break;
+function exportData() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(loadCards(), null, 2)], { type: 'application/json' }));
+  a.download = 'vocab-backup.json'; a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => { try { saveLocal(JSON.parse(ev.target.result)); renderWords(); } catch { alert('文件格式错误'); } };
+  r.readAsText(file);
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const cards = loadCards();
+  const log   = getReviewLog();
+  const total    = cards.length;
+  const mastered = cards.filter(isMastered).length;
+  const dueToday = cards.filter(isDue).length;
+  const totalRev = Object.values(log).reduce((a, b) => a + b, 0);
+
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = d.toISOString().slice(0, 10);
+    if (log[k] || cards.some(c => new Date(c.createdAt).toISOString().slice(0, 10) === k)) streak++;
+    else if (i > 0) break;
   }
 
-  // total reviews
-  const totalReviews=Object.values(reviewLog).reduce((a,b)=>a+b,0);
-
-  // stat cards
-  document.getElementById('stat-grid').innerHTML=`
+  document.getElementById('stat-grid').innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">累计单词</div><div class="stat-sub">已掌握 ${mastered} 个</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#d97706;">${streak}</div><div class="stat-label">连续学习天数</div><div class="stat-sub">今日待复习 ${dueToday} 个</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:#1d4ed8;">${totalReviews}</div><div class="stat-label">累计复习次数</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#1d4ed8;">${totalRev}</div><div class="stat-label">累计复习次数</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#15803d;">${mastered}</div><div class="stat-label">已掌握单词</div><div class="stat-sub">间隔 ≥ 21 天</div></div>`;
 
-  // 14-day add chart
-  const addData=[];
-  for(let i=13;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10);
-    addData.push({label:k.slice(5),val:cards.filter(c=>new Date(c.createdAt).toISOString().slice(0,10)===k).length});
-  }
-  renderBarChart('bar-add',addData,'#fde68a','#d97706');
+  const days14 = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (13 - i));
+    return d.toISOString().slice(0, 10);
+  });
 
-  // 14-day review chart
-  const revData=[];
-  for(let i=13;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10);
-    revData.push({label:k.slice(5),val:reviewLog[k]||0});
-  }
-  renderBarChart('bar-review',revData,'#bfdbfe','#1d4ed8');
+  renderBarChart('bar-add',
+    days14.map(k => ({ label: k.slice(5), val: cards.filter(c => new Date(c.createdAt).toISOString().slice(0, 10) === k).length })),
+    '#fde68a', '#d97706');
 
-  // mastery distribution
-  const buckets=[
-    {label:'新词\n(0次)',count:cards.filter(c=>c.repetitions===0).length,color:'#fecaca'},
-    {label:'学习中\n(1-3次)',count:cards.filter(c=>c.repetitions>=1&&c.repetitions<=3).length,color:'#fed7aa'},
-    {label:'熟悉\n(4-7次)',count:cards.filter(c=>c.repetitions>=4&&c.repetitions<=7).length,color:'#bfdbfe'},
-    {label:'已掌握\n(8+次)',count:cards.filter(c=>c.repetitions>=8||isMastered(c)).length,color:'#bbf7d0'},
+  renderBarChart('bar-review',
+    days14.map(k => ({ label: k.slice(5), val: log[k] || 0 })),
+    '#bfdbfe', '#1d4ed8');
+
+  const buckets = [
+    { label: '新词 (0次)',   count: cards.filter(c => c.repetitions === 0).length,                          color: '#fecaca' },
+    { label: '学习中 (1-3)', count: cards.filter(c => c.repetitions >= 1 && c.repetitions <= 3).length,    color: '#fed7aa' },
+    { label: '熟悉 (4-7)',   count: cards.filter(c => c.repetitions >= 4 && c.repetitions <= 7).length,    color: '#bfdbfe' },
+    { label: '已掌握 (8+)',  count: cards.filter(c => c.repetitions >= 8 || isMastered(c)).length,         color: '#bbf7d0' },
   ];
-  const maxB=Math.max(...buckets.map(b=>b.count),1);
-  document.getElementById('mastery-bars').innerHTML=buckets.map(b=>`
+  const maxB = Math.max(...buckets.map(b => b.count), 1);
+  document.getElementById('mastery-bars').innerHTML = buckets.map(b => `
     <div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:#57534e;">${b.label.replace('\n',' ')}</span><span style="color:#78716c;font-weight:600;">${b.count}</span></div>
-      <div style="background:#f5f5f4;border-radius:999px;height:8px;"><div style="background:${b.color};border:1px solid ${b.color};height:8px;border-radius:999px;width:${Math.max(b.count/maxB*100,b.count?2:0)}%;transition:width 0.4s;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span style="color:#57534e;">${b.label}</span>
+        <span style="color:#78716c;font-weight:600;">${b.count}</span>
+      </div>
+      <div style="background:#f5f5f4;border-radius:999px;height:8px;">
+        <div style="background:${b.color};height:8px;border-radius:999px;width:${Math.max(b.count / maxB * 100, b.count ? 2 : 0)}%;transition:width 0.4s;"></div>
+      </div>
     </div>`).join('');
 }
 
-function renderBarChart(id,data,color,borderColor){
-  const max=Math.max(...data.map(d=>d.val),1);
-  document.getElementById(id).innerHTML=data.map(d=>`
+function renderBarChart(id, data, color, border) {
+  const max = Math.max(...data.map(d => d.val), 1);
+  document.getElementById(id).innerHTML = data.map(d => `
     <div class="bar-col">
-      <div class="bar-val">${d.val||''}</div>
-      <div class="bar" style="height:${Math.max(d.val/max*70,d.val?4:0)}px;background:${color};border:1px solid ${borderColor};"></div>
+      <div class="bar-val">${d.val || ''}</div>
+      <div class="bar" style="height:${Math.max(d.val / max * 70, d.val ? 4 : 0)}px;background:${color};border:1px solid ${border};"></div>
       <div class="bar-label">${d.label}</div>
     </div>`).join('');
 }
 
-// ── Settings ───────────────────────────────────────────────────
-function openSettings(){
-  const{url,key,syncKey}=getConfig();
-  if(url)document.getElementById('sb-url').value=url;
-  if(key)document.getElementById('sb-key').value=key;
-  if(syncKey)document.getElementById('sb-synckey').value=syncKey;
+// ── Settings ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  const { url, key, syncKey } = getCfg();
+  if (url)     document.getElementById('sb-url').value     = url;
+  if (key)     document.getElementById('sb-key').value     = key;
+  if (syncKey) document.getElementById('sb-synckey').value = syncKey;
   document.getElementById('settings-modal').classList.add('open');
 }
-function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
-function closeSettingsIfOutside(e){if(e.target===document.getElementById('settings-modal'))closeSettings();}
-async function saveSettings(){
-  const url=document.getElementById('sb-url').value.trim().replace(/\/$/,'');
-  const key=document.getElementById('sb-key').value.trim();
-  const syncKey=document.getElementById('sb-synckey').value.trim();
-  const err=document.getElementById('settings-error'),ok=document.getElementById('settings-ok');
-  err.style.display='none';ok.style.display='none';
-  if(!url||!key||!syncKey){err.textContent='请填写所有字段';err.style.display='block';return;}
-  try{const r=await fetch(`${url}/rest/v1/vocab_cards?limit=1`,{headers:{'apikey':key,'Authorization':`Bearer ${key}`}});if(!r.ok)throw new Error(await r.text());}
-  catch(e){err.textContent='连接失败：'+e.message;err.style.display='block';return;}
-  localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);localStorage.setItem('sb_synckey',syncKey);
-  try{
-    const cloudCards=await syncFromCloud();
-    if(cloudCards&&cloudCards.length>0){const local=loadCards();const merged=Object.values([...local,...cloudCards].reduce((acc,c)=>{acc[c.id]=c;return acc},{}));saveLocal(merged);}
-    else await syncToCloud(loadCards());
-    ok.textContent='连接成功！数据已同步。';ok.style.display='block';setSyncStatus(true);
-    setTimeout(()=>{closeSettings();renderWords();},1500);
-  }catch(e){err.textContent='同步失败：'+e.message;err.style.display='block';}
-}
-function copySql(){navigator.clipboard.writeText(document.getElementById('sql-code').textContent).then(()=>alert('已复制！'));}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+function closeSettingsIfOutside(e) { if (e.target === document.getElementById('settings-modal')) closeSettings(); }
 
-// ── Init ───────────────────────────────────────────────────────
-if(isConfigured()){
-  setSyncStatus('syncing');
-  syncFromCloud().then(c=>{if(c)saveLocal(c);setSyncStatus(true);}).catch(()=>setSyncStatus(true));
+async function saveSettings() {
+  const url     = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
+  const key     = document.getElementById('sb-key').value.trim();
+  const syncKey = document.getElementById('sb-synckey').value.trim();
+  const err = document.getElementById('settings-error');
+  const ok  = document.getElementById('settings-ok');
+  err.style.display = 'none'; ok.style.display = 'none';
+  if (!url || !key || !syncKey) { err.textContent = '请填写所有字段'; err.style.display = 'block'; return; }
+  try {
+    const r = await fetch(`${url}/rest/v1/vocab_cards?limit=1`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    if (!r.ok) throw new Error(await r.text());
+  } catch(e) { err.textContent = '连接失败：' + e.message; err.style.display = 'block'; return; }
+  localStorage.setItem('sb_url', url); localStorage.setItem('sb_key', key); localStorage.setItem('sb_synckey', syncKey);
+  try {
+    const cloud = await syncDown();
+    if (cloud && cloud.length) {
+      const merged = Object.values([...loadCards(), ...cloud].reduce((acc, c) => { acc[c.id] = c; return acc; }, {}));
+      saveLocal(merged);
+    } else await syncUp(loadCards());
+    ok.textContent = '连接成功！数据已同步。'; ok.style.display = 'block';
+    setSyncStatus(true);
+    setTimeout(() => { closeSettings(); renderWords(); }, 1500);
+  } catch(e) { err.textContent = '同步失败：' + e.message; err.style.display = 'block'; }
+}
+
+function copySql() {
+  navigator.clipboard.writeText(document.getElementById('sql-code').textContent).then(() => alert('已复制！'));
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+if (isConfigured()) {
+  setSyncStatus('ing');
+  syncDown().then(c => { if (c) saveLocal(c); setSyncStatus(true); }).catch(() => setSyncStatus(true));
 }
 </script>
 </body>
