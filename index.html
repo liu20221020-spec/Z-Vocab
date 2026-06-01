@@ -371,137 +371,80 @@ async function translate(text){
 }
 
 // ── Sentence Structure Analysis ────────────────────────────────
-// Subordinating conjunctions that introduce clauses
-const CLAUSE_STARTERS = new Set(['that','which','who','whom','whose','where','when','while','although','though','because','since','if','unless','until','after','before','as','whether','how','what','whatever','whoever','whenever','wherever','however']);
-// Common adverbials
-const ADV_WORDS = new Set(['almost','also','already','always','just','never','not','now','often','only','quite','really','recently','sometimes','soon','still','then','too','very','yet','again','also','even','here','maybe','perhaps','perhaps','rather','so','soon','there','thus','hereby','thereby','therefore','hence','thus','still','once','twice']);
+const SC_COLORS = {
+  subj:   'background:#dbeafe;border-radius:3px;padding:1px 3px;',
+  verb:   'background:#dcfce7;border-radius:3px;padding:1px 3px;',
+  obj:    'background:#fed7aa;border-radius:3px;padding:1px 3px;',
+  attr:   'background:#ede9fe;border-radius:3px;padding:1px 3px;',
+  adv:    'background:#fef9c3;border-radius:3px;padding:1px 3px;',
+  clause: 'background:#fce7f3;border-radius:3px;padding:1px 3px;',
+  none:   ''
+};
+
+const CLAUSE_WORDS = new Set(['that','which','who','whom','whose','where','when','while','although','though','because','since','unless','until','whether','how','whatever','whoever','whenever','wherever','however']);
+const PREPS = new Set(['in','on','at','by','for','with','of','about','through','during','after','before','into','from','over','under','between','among','toward','towards','upon','within','without','along','across','despite','except','past','since','until','up','down','off','out','as','like','near','than','via','per']);
+const DETS = new Set(['the','a','an','this','that','these','those','my','your','his','her','its','our','their','all','both','each','every','some','any','no','more','most','many','much','few','little','several','other','another','either','neither','one','two','three']);
+const CONJS = new Set(['and','or','but','nor','so','yet','for','both','either','neither']);
+const AUX_VERBS = new Set(['is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','must','can','could','seem','seems','seemed','appear','appears','appeared','become','becomes','became']);
+const ADV_WORDS = new Set(['almost','also','already','always','just','never','not','now','often','only','quite','really','recently','sometimes','soon','still','then','too','very','yet','again','even','here','maybe','perhaps','rather','so','there','thus','hence','therefore','once','twice','nearly','hardly','scarcely','merely','simply','truly','largely','mainly','mostly','partly','fully','highly','deeply','widely','clearly','generally']);
+
+function classifyWord(w, i, wordList) {
+  const lw = w.toLowerCase();
+  // clause introducer
+  if (CLAUSE_WORDS.has(lw) && i > 0) return 'clause';
+  // conjunction → none
+  if (CONJS.has(lw)) return 'none';
+  // preposition → adv/state
+  if (PREPS.has(lw)) return 'adv';
+  // determiner → part of noun group, pass to context
+  if (DETS.has(lw)) return null; // resolved by context
+  // adverb words
+  if (ADV_WORDS.has(lw)) return 'adv';
+  // -ly suffix = adverb
+  if (lw.length > 4 && lw.endsWith('ly')) return 'adv';
+  // auxiliary verbs
+  if (AUX_VERBS.has(lw)) return 'verb';
+  // past tense / -ed = verb
+  if (lw.length > 4 && /[^aeiou]ed$/.test(lw)) return 'verb';
+  // common verb endings (not -ness words)
+  if (lw.length > 5 && /[aeiou]te[sd]?$/.test(lw) && !/ness$/.test(lw)) return 'verb';
+  // -ing = verb (when not after determiner)
+  if (lw.length > 5 && lw.endsWith('ing') && i > 0 && !DETS.has(wordList[i-1]?.toLowerCase())) return 'verb';
+  // adjective suffixes
+  if (lw.length > 5 && /(ive|ous|ial|ical|ful|less|able|ible|ent|ant|ish|ory|ary|atory)$/.test(lw)) return 'attr';
+  // noun suffixes
+  if (lw.length > 4 && /(tion|sion|ness|ment|ity|ism|ist|ance|ence|ship|hood|ure)$/.test(lw)) return null; // noun, resolved by context
+  // pronouns → subject
+  if (/^(i|he|she|they|we|you|it)$/i.test(lw)) return 'subj';
+  // object pronouns
+  if (/^(me|him|her|them|us|you|it)$/i.test(lw) && i > 0) return 'obj';
+  return null; // context-dependent
+}
 
 function analyzeSentence(s) {
-  // Returns a map: wordIndex -> class
-  const words = [];
-  const tokenRegex = /[\w']+|[^\w\s]|\s+/g;
-  let m, idx = 0;
-  while ((m = tokenRegex.exec(s)) !== null) {
-    words.push({ text: m[0], start: m.index, isWord: /[a-zA-Z]/.test(m[0]) });
-  }
+  const tokens = s.match(/[\w']+|[^\w\s]|\s+/g) || [];
+  const wordList = tokens.filter(t => /[a-zA-Z]/.test(t));
 
-  // Use compromise if available
-  if (window.nlp) {
-    const doc = nlp(s);
-    const labelMap = {}; // word start offset -> class
+  // First pass: classify each word
+  const raw = wordList.map((w, i) => ({ w, cls: classifyWord(w, i, wordList) }));
 
-    // Mark verbs
-    doc.verbs().forEach(v => {
-      v.terms().forEach(t => { if(t.offset) labelMap[t.offset.start] = 'sc-verb'; });
-    });
+  // Second pass: find first verb index to split subject / object
+  let firstVerbIdx = raw.findIndex(r => r.cls === 'verb');
+  if (firstVerbIdx === -1) firstVerbIdx = Math.floor(wordList.length / 2);
 
-    // Mark subjects (noun phrases before main verb)
-    doc.match('#Noun+').forEach(np => {
-      np.terms().forEach(t => {
-        if(t.offset && !labelMap[t.offset.start]) {
-          // Check if it's before first verb → subject, else object/other
-          const firstVerbOffset = getFirstVerbOffset(doc);
-          labelMap[t.offset.start] = t.offset.start < firstVerbOffset ? 'sc-subj' : 'sc-obj';
-        }
-      });
-    });
-
-    // Mark adjectives/attributes modifying nouns
-    doc.adjectives().forEach(adj => {
-      adj.terms().forEach(t => { if(t.offset && !labelMap[t.offset.start]) labelMap[t.offset.start] = 'sc-attr'; });
-    });
-
-    // Mark adverbs
-    doc.adverbs().forEach(adv => {
-      adv.terms().forEach(t => { if(t.offset && !labelMap[t.offset.start]) labelMap[t.offset.start] = 'sc-adv'; });
-    });
-
-    return { words, labelMap, useOffset: true };
-  }
-
-  // Fallback: rule-based
-  return analyzeFallback(words);
-}
-
-function getFirstVerbOffset(doc) {
-  let minOffset = 99999;
-  doc.verbs().forEach(v => {
-    v.terms().forEach(t => { if(t.offset && t.offset.start < minOffset) minOffset = t.offset.start; });
-  });
-  return minOffset;
-}
-
-function analyzeFallback(words) {
-  // Rule-based: identify clause boundaries first, then subject/verb/object
-  const labelMap = {};
-  const wordsOnly = words.filter(w => w.isWord);
-
-  // Find clause starters
+  // Third pass: resolve nulls by position
   let inClause = false;
-  let foundVerb = false;
-  let foundSubjEnd = false;
-
-  wordsOnly.forEach((w, i) => {
-    const lw = w.text.toLowerCase();
-
-    // Clause detection
-    if (CLAUSE_STARTERS.has(lw) && i > 0) {
-      inClause = true;
-      labelMap[i] = 'sc-clause';
-      return;
-    }
-    if (inClause) { labelMap[i] = 'sc-clause'; return; }
-
-    // Adverbial words
-    if (ADV_WORDS.has(lw)) { labelMap[i] = 'sc-adv'; return; }
-
-    // Prepositions → start of adverbial/attribute phrase
-    if (/^(in|on|at|by|for|with|of|about|through|during|after|before|into|from|over|under|between|among|toward|towards|upon|within|without|along|across|behind|below|beside|beyond|despite|except|inside|outside|past|since|until|up|down|off|out)$/i.test(lw)) {
-      labelMap[i] = 'sc-adv'; return;
-    }
-
-    // Determiners/pronouns → part of noun phrase (subject or object)
-    if (/^(the|a|an|this|that|these|those|my|your|his|her|its|our|their|all|both|each|every|some|any|no|more|most|many|much|few|little|several|other|another|either|neither)$/i.test(lw)) {
-      labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj'; return;
-    }
-
-    // Verb detection by suffix
-    if (!foundVerb && i > 0 &&
-      (/^(is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|shall|should|may|might|must|can|could)$/i.test(lw) ||
-       /[aeiou]ted$|[^aeiou]ed$|[aeiou]ing$|[^t]ing$/.test(lw) && !/^(interesting|fascinating|compelling|existing|following|remaining)$/i.test(lw))) {
-      labelMap[i] = 'sc-verb';
-      foundVerb = true;
-      foundSubjEnd = true;
-      return;
-    }
-
-    // Noun detection by suffix
-    if (/(tion|sion|ness|ment|ity|ism|ist|ance|ence|ship|hood|age|ure|er|or)$/i.test(lw) && lw.length > 4) {
-      labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj'; return;
-    }
-
-    // Adjective by suffix
-    if (/(ive|ous|al|ic|ful|less|able|ible|ent|ant|ish|ary|ory|ical)$/i.test(lw) && lw.length > 4) {
-      labelMap[i] = 'sc-attr'; return;
-    }
-
-    // Adverb by suffix
-    if (/ly$/.test(lw) && lw.length > 4) { labelMap[i] = 'sc-adv'; return; }
-
-    // Capitalized mid-sentence → proper noun (subject)
-    if (i > 0 && w.text[0] === w.text[0].toUpperCase() && /[A-Z]/.test(w.text[0])) {
-      labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj'; return;
-    }
-
-    // Conjunction
-    if (/^(and|or|but|nor|so|yet|for|both|either|neither|not only|whether)$/i.test(lw)) {
-      labelMap[i] = 'sc-none'; return;
-    }
-
-    labelMap[i] = foundSubjEnd ? 'sc-obj' : 'sc-subj';
+  const resolved = raw.map((r, i) => {
+    if (r.cls === 'clause') { inClause = true; return 'clause'; }
+    if (inClause) return 'clause';
+    if (r.cls !== null) return r.cls;
+    // null = context-dependent noun/det
+    if (i < firstVerbIdx) return 'subj';
+    if (i === firstVerbIdx) return 'verb';
+    return 'obj';
   });
 
-  return { words, labelMap, useOffset: false };
+  return { tokens, wordLabels: resolved };
 }
 
 // ── English Dictionary ─────────────────────────────────────────
@@ -553,27 +496,31 @@ function onSentenceInput(){
 function renderTokens(s){
   const c=document.getElementById('token-display');
   c.innerHTML='';
-  const {words, labelMap, useOffset} = analyzeSentence(s);
-  let wordIdx = 0;
-  words.forEach(w=>{
-    if(!w.isWord){
-      // space or punctuation
-      if(/\s+/.test(w.text)) c.appendChild(document.createTextNode(w.text));
-      else { const sp=document.createElement('span');sp.className='sc-none';sp.textContent=w.text;c.appendChild(sp); }
-      return;
+  const {tokens, wordLabels} = analyzeSentence(s);
+  let wi=0;
+  tokens.forEach(t=>{
+    if(/[a-zA-Z]/.test(t)){
+      const b=document.createElement('button');
+      b.textContent=t;
+      const label=wordLabels[wi]||'none';
+      // use inline style to guarantee color shows regardless of CSS specificity
+      b.setAttribute('style', `${SC_COLORS[label]}border:none;cursor:pointer;font-size:15px;font-family:inherit;transition:opacity 0.1s;`);
+      b.onmouseenter=()=>b.style.opacity='0.75';
+      b.onmouseleave=()=>b.style.opacity='1';
+      b.onclick=()=>selectWord(t,b);
+      c.appendChild(b);
+      wi++;
+    } else if(/\s+/.test(t)){
+      c.appendChild(document.createTextNode(t));
+    } else {
+      const sp=document.createElement('span');sp.style.color='#a8a29e';sp.textContent=t;c.appendChild(sp);
     }
-    const b=document.createElement('button');
-    b.textContent=w.text;
-    const cls = useOffset ? (labelMap[w.start]||'sc-none') : (labelMap[wordIdx]||'sc-none');
-    b.className=`token-btn ${cls}`;
-    b.onclick=()=>selectWord(w.text,b);
-    c.appendChild(b);
-    wordIdx++;
   });
 }
 async function selectWord(word,btn){
-  document.querySelectorAll('.token-btn').forEach(b=>b.classList.remove('sc-selected'));
-  btn.classList.add('sc-selected');curWord=word;
+  // reset previous selection outline
+  document.querySelectorAll('#token-display button').forEach(b=>b.style.outline='');
+  btn.style.outline='2px solid #f59e0b';btn.style.outlineOffset='1px';curWord=word;
   document.getElementById('translation-box').style.display='none';
   document.getElementById('en-def-box').style.display='none';
   document.getElementById('save-alert').style.display='none';
