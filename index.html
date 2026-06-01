@@ -365,12 +365,13 @@ async function translate(text){
 }
 
 // ── POS Tagging ────────────────────────────────────────────────
-function getPosClass(term){
-  if(term.has('#Noun'))return'pos-noun';
-  if(term.has('#Verb'))return'pos-verb';
-  if(term.has('#Adjective'))return'pos-adj';
-  if(term.has('#Adverb'))return'pos-adv';
-  if(term.has('#Preposition')||term.has('#Conjunction'))return'pos-prep';
+function getTagClass(tags){
+  if(!tags||!tags.length)return'pos-other';
+  if(tags.includes('Noun')||tags.includes('ProperNoun'))return'pos-noun';
+  if(tags.includes('Verb'))return'pos-verb';
+  if(tags.includes('Adjective'))return'pos-adj';
+  if(tags.includes('Adverb'))return'pos-adv';
+  if(tags.includes('Preposition')||tags.includes('Conjunction')||tags.includes('Determiner'))return'pos-prep';
   return'pos-other';
 }
 
@@ -421,26 +422,29 @@ function onSentenceInput(){
   if(s)renderTokens(s);
 }
 function renderTokens(s){
-  const tokens=s.match(/[\w']+|[^\w\s]|\s+/g)||[];
-  const c=document.getElementById('token-display');c.innerHTML='';
-  // use compromise for POS
-  const doc=window.nlp?nlp(s):null;
-  tokens.forEach(t=>{
-    if(/[a-zA-Z]/.test(t)){
+  const c=document.getElementById('token-display');
+  c.innerHTML='';
+  if(window.nlp){
+    // compromise returns terms with pre/post whitespace and tags[]
+    const terms=nlp(s).terms().json();
+    terms.forEach(term=>{
+      if(term.pre)c.appendChild(document.createTextNode(term.pre));
       const b=document.createElement('button');
-      b.textContent=t;
-      // get POS class
-      let posClass='pos-other';
-      if(doc){
-        const term=doc.match(t);
-        posClass=getPosClass(term);
-      }
-      b.className=`token-btn ${posClass}`;
-      b.onclick=()=>selectWord(t,b);
+      b.className=`token-btn ${getTagClass(term.tags)}`;
+      b.textContent=term.text;
+      b.onclick=()=>selectWord(term.text,b);
       c.appendChild(b);
-    }else if(/\s+/.test(t)){c.appendChild(document.createTextNode(t));}
-    else{const sp=document.createElement('span');sp.className='token-punct';sp.textContent=t;c.appendChild(sp);}
-  });
+      if(term.post)c.appendChild(document.createTextNode(term.post));
+    });
+  }else{
+    // fallback: no colors
+    const tokens=s.match(/[\w']+|[^\w\s]|\s+/g)||[];
+    tokens.forEach(t=>{
+      if(/[a-zA-Z]/.test(t)){const b=document.createElement('button');b.className='token-btn pos-other';b.textContent=t;b.onclick=()=>selectWord(t,b);c.appendChild(b);}
+      else if(/\s+/.test(t)){c.appendChild(document.createTextNode(t));}
+      else{const sp=document.createElement('span');sp.className='token-punct';sp.textContent=t;c.appendChild(sp);}
+    });
+  }
 }
 async function selectWord(word,btn){
   document.querySelectorAll('.token-btn').forEach(b=>b.classList.remove('pos-selected'));
