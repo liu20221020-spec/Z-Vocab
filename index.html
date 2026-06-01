@@ -369,12 +369,14 @@ async function translate(text){
 
 // ── POS Tagging ────────────────────────────────────────────────
 function getTagClass(tags){
-  if(!tags||!tags.length)return'pos-other';
-  if(tags.includes('Noun')||tags.includes('ProperNoun'))return'pos-noun';
-  if(tags.includes('Verb'))return'pos-verb';
-  if(tags.includes('Adjective'))return'pos-adj';
-  if(tags.includes('Adverb'))return'pos-adv';
-  if(tags.includes('Preposition')||tags.includes('Conjunction')||tags.includes('Determiner'))return'pos-prep';
+  if(!tags)return'pos-other';
+  // compromise v14 returns tags as object {Noun:true} OR array — handle both
+  const has=(t)=>Array.isArray(tags)?tags.includes(t):(tags[t]===true);
+  if(has('Noun')||has('ProperNoun')||has('Singular')||has('Plural'))return'pos-noun';
+  if(has('Verb')||has('Infinitive')||has('PastTense')||has('PresentTense'))return'pos-verb';
+  if(has('Adjective'))return'pos-adj';
+  if(has('Adverb'))return'pos-adv';
+  if(has('Preposition')||has('Conjunction')||has('Determiner')||has('Article'))return'pos-prep';
   return'pos-other';
 }
 
